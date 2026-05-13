@@ -1,3 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Java_Project</string>
+    <string name="app_name">맛집 공유</string>
+
+    <!-- Home -->
+    <string name="location_default">충청남도, 신부동</string>
+    <string name="search_hint">먹고싶은 음식을 검색하세요</string>
+    <string name="today_local_restaurants">오늘 동네 맛집</string>
+    <string name="see_more">더보기</string>
+    <string name="store_name">상호명</string>
+    <string name="rating_label">평점:</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">홈</string>
+    <string name="nav_my">마이</string>
+    <string name="nav_board">게시판</string>
+
+    <!-- My Page -->
+    <string name="my_restaurants">나의 맛집</string>
+    <string name="nickname">닉네임</string>
+    <string name="change_nickname">닉네임 변경</string>
+    <string name="change_profile">프로필 변경</string>
+    <string name="post_management">게시물 관리</string>
+    <string name="my_posts">내가 쓴 게시물</string>
+    <string name="my_replies">내가 쓴 답글</string>
+    <string name="only_my_restaurants">나만의 맛집</string>
+    <string name="app_intro">앱 소개</string>
+    <string name="notice">공지사항</string>
+    <string name="customer_center">고객센터</string>
+
+    <!-- Board -->
+    <string name="board_title">맛집 공유 게시판</string>
+    <string name="board_no">No</string>
+    <string name="board_subject">제 목</string>
+    <string name="board_writer">작성자</string>
+    <string name="board_reply">답글</string>
+
+    <!-- Detail -->
+    <string name="address_label">주소:충청남도 천안시 00구</string>
+    <string name="address_detail">000길 000</string>
+    <string name="local_restaurant">현지인 맛집</string>
+    <string name="menu_label">메뉴</string>
+
+    <!-- Search -->
+    <string name="search">검색</string>
+    <string name="search_result">검색결과</string>
+    <string name="opening_hours">영업시간:09시30분 영업시작</string>
 </resources>

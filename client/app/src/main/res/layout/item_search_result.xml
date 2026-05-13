@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="14dp"
+    android:background="@drawable/bg_card_border"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <!-- Image Placeholder -->
+    <FrameLayout
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="@drawable/bg_image_placeholder">
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_image_placeholder"
+            android:contentDescription="@string/store_name" />
+    </FrameLayout>
+
+    <!-- Right Info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Store Name -->
+        <TextView
+            android:id="@+id/tv_store_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00칼국수"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Rating -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rating_label"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="2dp"
+                android:src="@drawable/ic_star" />
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_star" />
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_star" />
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_star" />
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_star" />
+        </LinearLayout>
+
+        <!-- Opening hours -->
+        <TextView
+            android:id="@+id/tv_opening_hours"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/opening_hours"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>
