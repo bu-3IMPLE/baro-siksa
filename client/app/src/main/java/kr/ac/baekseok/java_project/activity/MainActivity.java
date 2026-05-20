@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -79,7 +80,12 @@ public class MainActivity extends AppCompatActivity {
 
 
         back_home_2=(TextView)findViewById(R.id.back_home_2);
+        register_Name=(EditText)findViewById(R.id.register_Name);
+        register_Nickname=(EditText)findViewById(R.id.register_Nickname);
+        register_Number=(EditText)findViewById(R.id.register_Number);
+        register_ID=(EditText)findViewById(R.id.register_ID);
         register_ID_View=(ImageView)findViewById(R.id.register_ID_View);
+        register_Password=(EditText)findViewById(R.id.register_Password);
         register_Password_View=(ImageView)findViewById(R.id.register_Password_View);
         register_btn_final=(Button)findViewById(R.id.register_btn_final); //최종 회원가입 버튼
         login_btn_2=(TextView)findViewById(R.id.login_btn_2);
@@ -100,6 +106,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 login_register_home.setVisibility(View.GONE);
                 register_In.setVisibility(View.VISIBLE);
+                register_ID.setText("");
+                register_Password.setText("");
+                register_Name.setText("");
+                register_Nickname.setText("");
+                register_Number.setText("");
             }
         });
 
@@ -109,8 +120,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 login_In.setVisibility(View.GONE);
                 login_register_home.setVisibility(View.VISIBLE);
-                register_ID.setText("");
-                register_Password.setText("");
             }
         });
         login_ID_View.setOnClickListener(new View.OnClickListener() {
@@ -145,6 +154,12 @@ public class MainActivity extends AppCompatActivity {
                 login_Password.setSelection(login_Password.getText().length());
             }
         });
+        findPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //비밀번호 찾기
+            }
+        });
         login_btn_final.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -160,6 +175,9 @@ public class MainActivity extends AppCompatActivity {
                 register_In.setVisibility(View.VISIBLE);
                 register_ID.setText("");
                 register_Password.setText("");
+                register_Name.setText("");
+                register_Nickname.setText("");
+                register_Number.setText("");
             }
         });
 

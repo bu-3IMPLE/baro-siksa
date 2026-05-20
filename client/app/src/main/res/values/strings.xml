@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">맛집 공유</string>
+    <string name="app_name">바로식사</string>
 
     <!-- Home -->
     <string name="location_default">충청남도, 신부동</string>
