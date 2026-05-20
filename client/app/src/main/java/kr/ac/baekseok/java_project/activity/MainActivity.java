@@ -1,7 +1,6 @@
-package kr.ac.baekseok.java_project;
+package kr.ac.baekseok.java_project.activity;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
 import android.view.View;
@@ -18,6 +17,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import org.w3c.dom.Text;
+
+import kr.ac.baekseok.java_project.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -60,33 +61,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //로그인, 회원가입 초기화면
         login_btn_1=(Button)findViewById(R.id.login_btn_1);
         register_btn_1=(Button)findViewById(R.id.register_btn_1);
         login_register_home=(LinearLayout)findViewById(R.id.login_register_home);
         login_In=(LinearLayout)findViewById(R.id.login_In);
         register_In=(LinearLayout)findViewById(R.id.register_In);
 
-        //로그인 화면
+
         back_home_1=(TextView)findViewById(R.id.back_home_1);
         login_ID=(EditText)findViewById(R.id.login_ID);
         login_ID_View=(ImageView)findViewById(R.id.login_ID_View);
         login_Password=(EditText)findViewById(R.id.login_Password);
         login_Password_View=(ImageView)findViewById(R.id.login_Password_View);
         findPassword=(TextView)findViewById(R.id.findPassword); //비밀번호 찾기 추가필요
-        login_btn_final=(Button)findViewById(R.id.login_btn_final); //최종 로그인 버튼 추가필요
+        login_btn_final=(Button)findViewById(R.id.login_btn_final); //최종 로그인 버튼
         register_btn_2=(TextView)findViewById(R.id.register_btn_2);
 
-        //회원가입 화면
+
         back_home_2=(TextView)findViewById(R.id.back_home_2);
-        register_Name=(EditText)findViewById(R.id.register_Name);
-        register_Nickname=(EditText)findViewById(R.id.register_Nickname);
-        register_Number=(EditText)findViewById(R.id.register_Number);
-        register_ID=(EditText)findViewById(R.id.register_ID);
         register_ID_View=(ImageView)findViewById(R.id.register_ID_View);
-        register_Password=(EditText)findViewById(R.id.register_Password);
         register_Password_View=(ImageView)findViewById(R.id.register_Password_View);
-        register_btn_final=(Button)findViewById(R.id.register_btn_final); //최종 회원가입 버튼 추가필요
+        register_btn_final=(Button)findViewById(R.id.register_btn_final); //최종 회원가입 버튼
         login_btn_2=(TextView)findViewById(R.id.login_btn_2);
 
 
@@ -105,11 +100,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 login_register_home.setVisibility(View.GONE);
                 register_In.setVisibility(View.VISIBLE);
-                register_Name.setText("");
-                register_Nickname.setText("");
-                register_Number.setText("");
-                register_ID.setText("");
-                register_Password.setText("");
             }
         });
 
@@ -119,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 login_In.setVisibility(View.GONE);
                 login_register_home.setVisibility(View.VISIBLE);
+                register_ID.setText("");
+                register_Password.setText("");
             }
         });
         login_ID_View.setOnClickListener(new View.OnClickListener() {
@@ -153,27 +145,19 @@ public class MainActivity extends AppCompatActivity {
                 login_Password.setSelection(login_Password.getText().length());
             }
         });
-        findPassword.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        }); //비밀번호 찾기 추가필요
         login_btn_final.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, MainHome.class);
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, HomeActivity.class);
                 startActivity(intent);
             }
-        }); //최종 로그인 버튼 추가필요
+        });
+
         register_btn_2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 login_In.setVisibility(View.GONE);
                 register_In.setVisibility(View.VISIBLE);
-                register_Name.setText("");
-                register_Nickname.setText("");
-                register_Number.setText("");
                 register_ID.setText("");
                 register_Password.setText("");
             }
@@ -219,12 +203,6 @@ public class MainActivity extends AppCompatActivity {
                 register_Password.setSelection(register_Password.getText().length());
             }
         });
-        register_btn_final.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        }); //최종 회원가입 버튼 추가필요
         login_btn_2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
