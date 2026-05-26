@@ -21,14 +21,25 @@ CREATE TABLE members
 -- 2. Restaurants 테이블
 CREATE TABLE restaurants
 (
-    restaurant_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name          VARCHAR(100)   NOT NULL,
-    address       VARCHAR(255)   NOT NULL,
-    latitude      DECIMAL(10, 8) NOT NULL,
-    longitude     DECIMAL(11, 8) NOT NULL,
-    phone_number  VARCHAR(20),
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    restaurant_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id        BIGINT         NOT NULL,
+    name             VARCHAR(100)   NOT NULL,
+    category         VARCHAR(50)    NOT NULL,
+    address          VARCHAR(255)   NOT NULL,
+    latitude         DECIMAL(10, 8) NOT NULL,
+    longitude        DECIMAL(11, 8) NOT NULL,
+    phone_number     VARCHAR(20),
+    description      TEXT,
+    open_time        TIME           NOT NULL,
+    close_time       TIME           NOT NULL,
+    break_start_time TIME,
+    break_end_time   TIME,
+    closed_days      VARCHAR(100),
+    is_deleted       TINYINT(1)     NOT NULL DEFAULT 0,
+    created_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (member_id) REFERENCES members (member_id)
 );
 
 -- 3. Ingredients 테이블
