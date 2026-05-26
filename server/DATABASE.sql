@@ -1,10 +1,8 @@
 DROP DATABASE IF EXISTS barosiksa;
-
 CREATE DATABASE barosiksa;
-
 USE barosiksa;
 
--- 1. members 테이블
+-- 1. members 테이블 (종속성 없음)
 CREATE TABLE members
 (
     member_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -18,7 +16,7 @@ CREATE TABLE members
     updated_at      TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 2. Restaurants 테이블
+-- 2. Restaurants 테이블 (members 참조)
 CREATE TABLE restaurants
 (
     restaurant_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -38,33 +36,87 @@ CREATE TABLE restaurants
     is_deleted       TINYINT(1)     NOT NULL DEFAULT 0,
     created_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP               DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
     FOREIGN KEY (member_id) REFERENCES members (member_id)
 );
 
--- 3. Ingredients 테이블
+-- 3. Ingredients 테이블 (종속성 없음)
 CREATE TABLE ingredients
 (
     ingredient_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name_kr       VARCHAR(50) NOT NULL,
-    name_en       VARCHAR(50) NOT NULL
+    name          VARCHAR(50) NOT NULL UNIQUE,
+    is_allergenic TINYINT(1)  NOT NULL DEFAULT 0,
+    created_at    TIMESTAMP            DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP            DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 4. Reservations 테이블
+-- 4. Restaurant_Ingredients 테이블 (restaurants, ingredients 참조)
+CREATE TABLE restaurant_ingredients
+(
+    restaurant_ingredient_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id            BIGINT NOT NULL,
+    ingredient_id            BIGINT NOT NULL,
+    origin                   VARCHAR(50),
+    stock_quantity           INT    NOT NULL DEFAULT 0,
+    created_at               TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+    updated_at               TIMESTAMP       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id),
+    FOREIGN KEY (ingredient_id) REFERENCES ingredients (ingredient_id),
+    UNIQUE KEY uq_rest_ingred (restaurant_id, ingredient_id)
+);
+
+-- 5. Menus 테이블 (restaurants 참조)
+CREATE TABLE menus
+(
+    menu_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id BIGINT       NOT NULL,
+    name          VARCHAR(100) NOT NULL,
+    price         INT          NOT NULL,
+    description   TEXT,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id)
+);
+
+-- 6. Menu_Ingredients 테이블 (menus, restaurant_ingredients 참조)
+CREATE TABLE menu_ingredients
+(
+    menu_ingredient_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    menu_id                  BIGINT NOT NULL,
+    restaurant_ingredient_id BIGINT NOT NULL,
+    FOREIGN KEY (menu_id) REFERENCES menus (menu_id),
+    FOREIGN KEY (restaurant_ingredient_id) REFERENCES restaurant_ingredients (restaurant_ingredient_id),
+    UNIQUE KEY uq_menu_ingredient (menu_id, restaurant_ingredient_id)
+);
+
+-- 7. Reservations 테이블 (members, restaurants 참조)
 CREATE TABLE reservations
 (
     reservation_id   BIGINT AUTO_INCREMENT PRIMARY KEY,
     member_id        BIGINT      NOT NULL,
     restaurant_id    BIGINT      NOT NULL,
     reservation_time DATETIME    NOT NULL,
-    status           VARCHAR(20) NOT NULL, -- 예: 'PENDING', 'CONFIRMED', 'CANCELLED'
+    status           VARCHAR(20) NOT NULL,
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members (member_id),
     FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id)
 );
 
--- 5. Reviews 테이블
+-- 8. Reservation_items 테이블 (menus, reservations 참조)
+CREATE TABLE reservation_items
+(
+    reservation_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    menu_id             BIGINT NOT NULL,
+    reservation_id      BIGINT NOT NULL,
+    quantity            INT    NOT NULL,
+    ordered_price       INT    NOT NULL,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (menu_id) REFERENCES menus (menu_id),
+    FOREIGN KEY (reservation_id) REFERENCES reservations (reservation_id)
+);
+
+-- 9. Reviews 테이블 (members, restaurants 참조)
 CREATE TABLE reviews
 (
     review_id     BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -75,42 +127,4 @@ CREATE TABLE reviews
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members (member_id),
     FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id)
-);
-
--- 6. Menus 테이블 (보완점 3: Audit 컬럼 추가)
-CREATE TABLE menus
-(
-    menu_id       BIGINT AUTO_INCREMENT PRIMARY KEY,
-    restaurant_id BIGINT       NOT NULL,
-    name          VARCHAR(100) NOT NULL,
-    price         INT          NOT NULL,
-    description   TEXT,
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                             -- [추가] 등록일
-    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- [추가] 수정일
-    FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id)
-);
-
--- 7. Reservation_items 테이블 (보완점 1: ordered_price 추가 / 보완점 3: Audit 컬럼 추가)
-CREATE TABLE reservation_items
-(
-    reservation_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    menu_id             BIGINT NOT NULL,
-    reservation_id      BIGINT NOT NULL,
-    quantity            INT    NOT NULL,
-    ordered_price       INT    NOT NULL,                                                 -- [추가] 주문 당시의 메뉴 가격 스냅샷 (가장 중요)
-    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,                             -- [추가] 등록일
-    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- [추가] 수정일
-    FOREIGN KEY (menu_id) REFERENCES menus (menu_id),
-    FOREIGN KEY (reservation_id) REFERENCES reservations (reservation_id)
-);
-
--- 8. Menu_Ingredients 테이블 (보완점 2: 대리키PK menu_ingredient_id 추가)
-CREATE TABLE menu_ingredients
-(
-    menu_ingredient_id BIGINT AUTO_INCREMENT PRIMARY KEY,  -- [추가] JPA 매핑 편의를 위한 독립 PK
-    menu_id            BIGINT NOT NULL,
-    ingredient_id      BIGINT NOT NULL,
-    FOREIGN KEY (menu_id) REFERENCES menus (menu_id),
-    FOREIGN KEY (ingredient_id) REFERENCES ingredients (ingredient_id),
-    UNIQUE KEY uq_menu_ingredient (menu_id, ingredient_id) -- 중복 연결 방지 제약조건
 );
