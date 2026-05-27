@@ -31,13 +31,13 @@ public class ReservationItem extends BaseTimeEntity {
     private Integer quantity;
 
     @Column(nullable = false)
-    private Integer orderPrice; // 예약 당시의 1개당 가격 스냅샷
+    private Integer orderedPrice; // 예약 당시의 1개당 가격 스냅샷
 
     @Builder
-    public ReservationItem(Reservation reservation, Menu menu, Integer quantity, Integer orderPrice) {
+    public ReservationItem(Reservation reservation, Menu menu, Integer quantity, Integer orderedPrice) {
         this.reservation = reservation;
         this.menu = menu;
         this.quantity = quantity;
-        this.orderPrice = orderPrice;
+        this.orderedPrice = orderedPrice;
     }
 }

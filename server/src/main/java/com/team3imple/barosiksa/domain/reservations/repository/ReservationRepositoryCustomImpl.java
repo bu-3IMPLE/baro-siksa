@@ -46,7 +46,7 @@ public class ReservationRepositoryCustomImpl implements ReservationRepositoryCus
                                                 menu.id,
                                                 menu.name,
                                                 reservationItem.quantity,
-                                                reservationItem.orderPrice
+                                                reservationItem.orderedPrice
                                         ).skipNulls())
                                 )
                         )
@@ -77,7 +77,7 @@ public class ReservationRepositoryCustomImpl implements ReservationRepositoryCus
                                                 menu.id,
                                                 menu.name,
                                                 reservationItem.quantity,
-                                                reservationItem.orderPrice
+                                                reservationItem.orderedPrice
                                         ).skipNulls())
                                 )
                         )

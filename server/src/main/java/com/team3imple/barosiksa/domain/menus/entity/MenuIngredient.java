@@ -1,7 +1,6 @@
 package com.team3imple.barosiksa.domain.menus.entity;
 
 import com.team3imple.barosiksa.domain.restaurant_ingredients.entity.RestaurantIngredient;
-import com.team3imple.barosiksa.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -12,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "menu_ingredients")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MenuIngredient extends BaseTimeEntity {
+public class MenuIngredient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "menu_ingredient_id")

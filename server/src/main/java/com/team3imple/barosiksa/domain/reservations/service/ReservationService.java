@@ -81,7 +81,7 @@ public class ReservationService {
                     .reservation(savedReservation)
                     .menu(menu)
                     .quantity(item.quantity())
-                    .orderPrice(menu.getPrice()) // 예약 당시 가격 스냅샷
+                    .orderedPrice(menu.getPrice()) // 예약 당시 가격 스냅샷
                     .build();
 
             reservationItemRepository.save(reservationItem);
@@ -165,7 +165,7 @@ public class ReservationService {
                     .reservation(reservation)
                     .menu(menu)
                     .quantity(item.quantity())
-                    .orderPrice(menu.getPrice())
+                    .orderedPrice(menu.getPrice())
                     .build();
 
             reservationItemRepository.save(reservationItem);

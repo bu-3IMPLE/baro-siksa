@@ -95,6 +95,7 @@ CREATE TABLE reservations
     member_id        BIGINT      NOT NULL,
     restaurant_id    BIGINT      NOT NULL,
     reservation_time DATETIME    NOT NULL,
+    total_price      INT         NOT NULL,
     status           VARCHAR(20) NOT NULL,
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
