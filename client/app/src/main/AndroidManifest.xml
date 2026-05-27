@@ -5,10 +5,6 @@
     <!-- 인터넷 권한 (서버 통신, 이미지 로드 시 필요) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- 지도 사용 시 위치 권한 (선택) -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -18,7 +14,7 @@
         android:theme="@style/Theme.Java_Project"
         tools:targetApi="31">
 
-        <!-- 홈 (메인 진입 Activity) -->
+        <!-- 메인 진입 -->
         <activity
             android:name=".activity.MainActivity"
             android:exported="true">
@@ -27,18 +23,54 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 홈 -->
         <activity
             android:name=".activity.HomeActivity"
             android:exported="false" />
+
         <!-- 마이 페이지 -->
         <activity
             android:name=".activity.MyPageActivity"
+            android:exported="false" />
+
+        <!-- 닉네임 변경 -->
+        <activity
+            android:name=".activity.NicknameChangeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+
+        <!-- 프로필 변경 -->
+        <activity
+            android:name=".activity.ProfileChangeActivity"
+            android:exported="false" />
+
+        <!-- 마이 리스트 (내 게시물 / 답글 / 나만의 맛집) -->
+        <activity
+            android:name=".activity.MyListActivity"
+            android:exported="false" />
+
+        <!-- 정보 (앱 소개 / 공지사항 / 고객센터) -->
+        <activity
+            android:name=".activity.InfoActivity"
             android:exported="false" />
 
         <!-- 게시판 -->
         <activity
             android:name=".activity.BoardActivity"
             android:exported="false" />
+
+        <!-- 게시물 상세 -->
+        <activity
+            android:name=".activity.PostDetailActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 게시물 작성 -->
+        <activity
+            android:name=".activity.PostWriteActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <!-- 검색 -->
         <activity

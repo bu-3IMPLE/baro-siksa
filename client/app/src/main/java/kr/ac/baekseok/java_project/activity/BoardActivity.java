@@ -1,12 +1,13 @@
 package kr.ac.baekseok.java_project.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -16,8 +17,11 @@ import kr.ac.baekseok.java_project.R;
 import kr.ac.baekseok.java_project.adapter.BoardAdapter;
 import kr.ac.baekseok.java_project.model.BoardPost;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * 맛집 공유 게시판 (이미지 2 가운데)
@@ -34,9 +38,11 @@ public class BoardActivity extends BaseActivity {
     private int currentPage = 1;
     private int totalPages = 1;
 
+    private ActivityResultLauncher<Intent> writeLauncher;
+
     @Override
     protected int getCurrentTab() {
-        return 2;  // 게시판 탭
+        return 2;
     }
 
     @Override
@@ -45,15 +51,39 @@ public class BoardActivity extends BaseActivity {
         setContentView(R.layout.activity_board);
 
         setupBottomNavigation();
+        registerWriteLauncher();
         prepareSampleData();
         setupRecyclerView();
         setupPagination();
+        setupFab();
         loadPage(1);
+    }
+
+    private void registerWriteLauncher() {
+        // 글쓰기 결과 수신 (ActivityResultLauncher 방식 - onActivityResult deprecated 대체)
+        writeLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() != RESULT_OK || result.getData() == null) return;
+
+                    String subject = result.getData()
+                            .getStringExtra(PostWriteActivity.EXTRA_NEW_SUBJECT);
+                    String content = result.getData()
+                            .getStringExtra(PostWriteActivity.EXTRA_NEW_CONTENT);
+
+                    if (subject != null) {
+                        // 새 게시물을 맨 앞에 추가
+                        int newNo = allPosts.size() + 1;
+                        allPosts.add(0, new BoardPost(
+                                newNo, subject, "나", 0, content, today()));
+                        totalPages = (int) Math.ceil((double) allPosts.size() / PAGE_SIZE);
+                        loadPage(1);
+                    }
+                });
     }
 
     private void prepareSampleData() {
         allPosts = new ArrayList<>();
-        // 페이지네이션 테스트용 더미 데이터
         String[] subjects = {
                 "OOO 맛있더라",
                 "OOO 맛있고 분위기 좋다",
@@ -67,7 +97,6 @@ public class BoardActivity extends BaseActivity {
                 "미식"
         };
 
-        // 페이지가 9개가 되도록 36개 생성 (디자인의 1~9 페이지 매칭)
         int totalItems = 36;
         for (int i = 1; i <= totalItems; i++) {
             int idx = (i - 1) % subjects.length;
@@ -75,7 +104,9 @@ public class BoardActivity extends BaseActivity {
                     i,
                     subjects[idx],
                     writers[idx],
-                    1 + (i % 5)
+                    1 + (i % 5),
+                    "이 게시물의 본문 내용입니다. 사용자가 직접 작성한 후기/리뷰가 여기에 표시됩니다.",
+                    today()
             ));
         }
         totalPages = (int) Math.ceil((double) allPosts.size() / PAGE_SIZE);
@@ -84,19 +115,11 @@ public class BoardActivity extends BaseActivity {
     private void setupRecyclerView() {
         rvPosts = findViewById(R.id.rv_board_posts);
         rvPosts.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new BoardAdapter(new ArrayList<>(), post -> {
-            Toast.makeText(this,
-                    "게시물: " + post.getSubject(),
-                    Toast.LENGTH_SHORT).show();
-            // 실제로는 게시물 상세 Activity로 이동
-        });
-        rvPosts.setAdapter(adapter);
     }
 
     private void setupPagination() {
         paginationLayout = findViewById(R.id.pagination_layout);
 
-        // 처음/이전/다음/마지막 버튼
         View btnFirst = findViewById(R.id.btn_first);
         View btnPrev = findViewById(R.id.btn_prev);
         View btnNext = findViewById(R.id.btn_next);
@@ -109,29 +132,29 @@ public class BoardActivity extends BaseActivity {
                 loadPage(Math.min(totalPages, currentPage + 1)));
         if (btnLast != null) btnLast.setOnClickListener(v -> loadPage(totalPages));
 
-        // 페이지 번호 텍스트들의 클릭 리스너 설정
         attachPageNumberListeners();
     }
 
     private void attachPageNumberListeners() {
         if (paginationLayout == null) return;
-
-        // 페이지네이션 LinearLayout 내부의 자식 중 숫자만 있는 TextView를 찾아서 리스너 등록
         for (int i = 0; i < paginationLayout.getChildCount(); i++) {
             View child = paginationLayout.getChildAt(i);
             if (!(child instanceof TextView)) continue;
-
-            CharSequence text = ((TextView) child).getText();
-            if (text == null) continue;
-
-            String s = text.toString().trim();
-            // 1~9 사이 숫자만
+            String s = ((TextView) child).getText().toString().trim();
             try {
                 final int page = Integer.parseInt(s);
                 child.setOnClickListener(v -> loadPage(page));
-            } catch (NumberFormatException ignored) {
-                // 숫자가 아니면 무시 (처음/이전/다음/마지막은 위에서 처리)
-            }
+            } catch (NumberFormatException ignored) {}
+        }
+    }
+
+    private void setupFab() {
+        View fab = findViewById(R.id.fab_write);
+        if (fab != null) {
+            fab.setOnClickListener(v -> {
+                Intent intent = new Intent(this, PostWriteActivity.class);
+                writeLauncher.launch(intent);
+            });
         }
     }
 
@@ -143,18 +166,26 @@ public class BoardActivity extends BaseActivity {
         int end = Math.min(start + PAGE_SIZE, allPosts.size());
         List<BoardPost> pageItems = new ArrayList<>(allPosts.subList(start, end));
 
-        adapter = new BoardAdapter(pageItems, post ->
-                Toast.makeText(this,
-                        "게시물: " + post.getSubject(),
-                        Toast.LENGTH_SHORT).show());
+        adapter = new BoardAdapter(pageItems, this::openPostDetail);
         rvPosts.setAdapter(adapter);
 
         highlightCurrentPage();
     }
 
-    /**
-     * 현재 페이지 번호를 굵게 표시한다.
-     */
+    private void openPostDetail(BoardPost post) {
+        Intent intent = new Intent(this, PostDetailActivity.class);
+        intent.putExtra(PostDetailActivity.EXTRA_POST_NO, post.getNo());
+        intent.putExtra(PostDetailActivity.EXTRA_POST_SUBJECT, post.getSubject());
+        intent.putExtra(PostDetailActivity.EXTRA_POST_WRITER, post.getWriter());
+        if (post.getContent() != null) {
+            intent.putExtra(PostDetailActivity.EXTRA_POST_CONTENT, post.getContent());
+        }
+        if (post.getCreatedAt() != null) {
+            intent.putExtra(PostDetailActivity.EXTRA_POST_DATE, post.getCreatedAt());
+        }
+        startActivity(intent);
+    }
+
     private void highlightCurrentPage() {
         if (paginationLayout == null) return;
 
@@ -176,9 +207,12 @@ public class BoardActivity extends BaseActivity {
                     tv.setTextColor(secondary);
                     tv.setTypeface(null, android.graphics.Typeface.NORMAL);
                 }
-            } catch (NumberFormatException ignored) {
-                // 화살표 버튼은 그대로 유지
-            }
+            } catch (NumberFormatException ignored) {}
         }
+    }
+
+    private String today() {
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                .format(new Date());
     }
 }
