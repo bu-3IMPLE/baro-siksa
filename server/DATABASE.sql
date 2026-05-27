@@ -120,12 +120,17 @@ CREATE TABLE reservation_items
 -- 9. Reviews 테이블 (members, restaurants 참조)
 CREATE TABLE reviews
 (
-    review_id     BIGINT AUTO_INCREMENT PRIMARY KEY,
-    member_id     BIGINT NOT NULL,
-    restaurant_id BIGINT NOT NULL,
-    rating        INT    NOT NULL,
-    comment       TEXT,
-    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    review_id      BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id      BIGINT                  NOT NULL,
+    restaurant_id  BIGINT                  NOT NULL,
+    reservation_id BIGINT                  NOT NULL UNIQUE,
+    rating         TINYINT                 NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment        TEXT,
+    is_deleted     BOOLEAN   DEFAULT FALSE NOT NULL,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members (member_id),
-    FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id)
+    FOREIGN KEY (restaurant_id) REFERENCES restaurants (restaurant_id),
+    FOREIGN KEY (reservation_id) REFERENCES reservations (reservation_id),
+    INDEX idx_restaurant_id (restaurant_id)
 );
