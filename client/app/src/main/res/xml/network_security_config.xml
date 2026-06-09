@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  개발 단계에서 http:// (암호화 안 된 통신)를 허용하기 위한 설정.
+  Android 9(API 28)부터는 기본적으로 https만 허용되므로,
+  로컬 서버를 http로 테스트하려면 이 설정이 필요하다.
+
+  배포 시에는 https만 쓰도록 이 파일에서 cleartext 허용을 제거하는 것이 좋다.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- 에뮬레이터에서 PC localhost 접속용 -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- localhost -->
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- 실제 기기 테스트용 내부 IP (본인 PC IP로 수정) -->
+        <domain includeSubdomains="true">192.168.0.10</domain>
+    </domain-config>
+</network-security-config>
