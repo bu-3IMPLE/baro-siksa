@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_main);
+        BaseActivity.applySystemBarInsets(this);
 
         login_btn_1=(Button)findViewById(R.id.login_btn_1);
         register_btn_1=(Button)findViewById(R.id.register_btn_1);

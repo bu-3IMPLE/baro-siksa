@@ -33,6 +33,7 @@ public class ProfileChangeActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_change);
+        BaseActivity.applySystemBarInsets(this);
 
         ivProfile = findViewById(R.id.iv_profile);
 

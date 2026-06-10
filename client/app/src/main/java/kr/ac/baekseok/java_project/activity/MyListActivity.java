@@ -42,6 +42,7 @@ public class MyListActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_list);
+        BaseActivity.applySystemBarInsets(this);
 
         listType = getIntent().getIntExtra(EXTRA_LIST_TYPE, TYPE_MY_POSTS);
 

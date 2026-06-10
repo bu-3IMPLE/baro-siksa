@@ -24,6 +24,7 @@ public class InfoActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
+        BaseActivity.applySystemBarInsets(this);
 
         int type = getIntent().getIntExtra(EXTRA_INFO_TYPE, TYPE_APP_INTRO);
 

@@ -207,4 +207,36 @@ public interface ApiService {
     /** 마스터 재료 생성 (ADMIN) → ingredientId */
     @POST("api/ingredients")
     Call<Long> createIngredient(@Body IngredientCreateRequest request);
+
+    // ========================= 게시판 (Post) =========================
+
+    /** 게시글 목록 (최신순 페이징) */
+    @GET("api/posts")
+    Call<PagePostResponse> getPosts(@Query("page") int page, @Query("size") int size);
+
+    /** 게시글 상세 */
+    @GET("api/posts/{postId}")
+    Call<PostDetailResponse> getPost(@Path("postId") long postId);
+
+    /** 게시글 작성 → postId */
+    @POST("api/posts")
+    Call<Long> createPost(@Body PostCreateRequest request);
+
+    /** 게시글 삭제 (작성자 본인) */
+    @DELETE("api/posts/{postId}")
+    Call<Void> deletePost(@Path("postId") long postId);
+
+    /** 댓글 목록 */
+    @GET("api/posts/{postId}/comments")
+    Call<List<PostCommentResponse>> getComments(@Path("postId") long postId);
+
+    /** 댓글 작성 → commentId */
+    @POST("api/posts/{postId}/comments")
+    Call<Long> createComment(@Path("postId") long postId,
+                             @Body PostCommentCreateRequest request);
+
+    /** 댓글 삭제 (작성자 본인) */
+    @DELETE("api/posts/{postId}/comments/{commentId}")
+    Call<Void> deleteComment(@Path("postId") long postId,
+                             @Path("commentId") long commentId);
 }
