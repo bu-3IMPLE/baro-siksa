@@ -1,220 +1,208 @@
 package kr.ac.baekseok.java_project.activity;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import kr.ac.baekseok.java_project.R;
-import kr.ac.baekseok.java_project.adapter.ImageCarouselAdapter;
-import kr.ac.baekseok.java_project.model.Restaurant;
+import kr.ac.baekseok.java_project.adapter.MenuListAdapter;
+import kr.ac.baekseok.java_project.dto.response.MenuResponse;
+import kr.ac.baekseok.java_project.dto.response.RestaurantResponse;
+import kr.ac.baekseok.java_project.network.RetrofitClient;
+import kr.ac.baekseok.java_project.util.RestaurantFormat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
- * 가게 상세 화면 (이미지 3 우측)
- *
- * - 상단에 이미지 ViewPager2 (자동 슬라이드)
- * - 인디케이터 도트 동기화
- * - 댓글/찜 버튼
- * - 주소 옆 지도 아이콘 → 지도 화면으로 이동
+ * 식당 상세 화면 - 실제 서버 연동.
+ * getRestaurant(상세) + getMenus(메뉴 목록) 두 API 호출.
+ * 더미 데이터 제거.
  */
-public class RestaurantDetailActivity extends BaseActivity {
+public class RestaurantDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_RESTAURANT_ID = "extra_restaurant_id";
     public static final String EXTRA_RESTAURANT_NAME = "extra_restaurant_name";
 
-    private ViewPager2 vpImages;
-    private LinearLayout indicatorDots;
+    private long restaurantId;
 
-    private boolean isFavorited = false;
+    private TextView tvTitle, tvName, tvCategory, tvDescription, tvHours,
+            tvBreak, tvClosedDays, tvPhone, tvAddress, tvMenuEmpty;
+    private View breakRow, closedRow, phoneRow;
+    private ProgressBar progress;
+    private RecyclerView rvMenus;
 
-    @Override
-    protected int getCurrentTab() {
-        return -1;
-    }
+    private final List<MenuResponse> menus = new ArrayList<>();
+    private MenuListAdapter menuAdapter;
+
+    private RestaurantResponse restaurant;  // 예약 화면에 넘길 때 사용
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_detail);
 
-        setupBottomNavigation();
-        setupBackButton();
-        bindRestaurantData();
-        setupImageCarousel();
-        setupActionButtons();
-        setupMapButton();
-    }
+        restaurantId = getIntent().getLongExtra(EXTRA_RESTAURANT_ID, -1);
+        String name = getIntent().getStringExtra(EXTRA_RESTAURANT_NAME);
 
-    private void setupBackButton() {
+        bindViews();
+        setupMenuList();
+
         View btnBack = findViewById(R.id.btn_back);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+
+        // 제목은 넘겨받은 이름으로 우선 표시 (상세 로드 전 빈 화면 방지)
+        if (name != null) {
+            tvTitle.setText(name);
+            tvName.setText(name);
+        }
+
+        View btnReserve = findViewById(R.id.btn_reserve);
+        if (btnReserve != null) {
+            btnReserve.setOnClickListener(v ->
+                    Toast.makeText(this, "예약 기능은 다음 단계에서 연결됩니다",
+                            Toast.LENGTH_SHORT).show());
+        }
+
+        if (restaurantId < 0) {
+            Toast.makeText(this, "잘못된 접근입니다", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        loadRestaurant();
+        loadMenus();
     }
 
-    private void bindRestaurantData() {
-        // Intent로 전달된 데이터 또는 더미 데이터로 화면 채우기
-        String name = getIntent().getStringExtra(EXTRA_RESTAURANT_NAME);
-        if (name == null) name = "00칼국수";
-
-        Restaurant restaurant = new Restaurant(
-                getIntent().getIntExtra(EXTRA_RESTAURANT_ID, 1),
-                name,
-                5.0f,
-                "영업시간:09시30분 시작",
-                "주소:충청남도 천안시 00구",
-                "000길 000",
-                true,
-                new String[]{"000국수", "00돈까스"},
-                new int[]{9000, 8000}
-        );
-
-        TextView tvName = findViewById(R.id.tv_store_name);
-        if (tvName != null) tvName.setText(restaurant.getName());
-
-        TextView tvRating = findViewById(R.id.tv_rating);
-        if (tvRating != null) {
-            tvRating.setText(String.format(Locale.getDefault(),
-                    "평점:%.1f", restaurant.getRating()));
-        }
-
-        TextView tvHours = findViewById(R.id.tv_opening_hours);
-        if (tvHours != null) tvHours.setText(restaurant.getOpeningHours());
-
-        TextView tvAddress = findViewById(R.id.tv_address);
-        if (tvAddress != null && restaurant.getAddress() != null) {
-            tvAddress.setText(restaurant.getAddress());
-        }
-
-        TextView tvAddressDetail = findViewById(R.id.tv_address_detail);
-        if (tvAddressDetail != null && restaurant.getAddressDetail() != null) {
-            tvAddressDetail.setText(restaurant.getAddressDetail());
-        }
-
-        // 메뉴 정보
-        String[] menus = restaurant.getMenuItems();
-        int[] prices = restaurant.getMenuPrices();
-        if (menus != null && prices != null && menus.length >= 2 && prices.length >= 2) {
-            TextView tvMenu1 = findViewById(R.id.tv_menu_1);
-            TextView tvMenu2 = findViewById(R.id.tv_menu_2);
-            if (tvMenu1 != null) {
-                tvMenu1.setText(String.format(Locale.getDefault(),
-                        "%s:%,d원", menus[0], prices[0]));
-            }
-            if (tvMenu2 != null) {
-                tvMenu2.setText(String.format(Locale.getDefault(),
-                        "%s:%,d원", menus[1], prices[1]));
-            }
-        }
+    private void bindViews() {
+        tvTitle = findViewById(R.id.tv_title);
+        tvName = findViewById(R.id.tv_name);
+        tvCategory = findViewById(R.id.tv_category);
+        tvDescription = findViewById(R.id.tv_description);
+        tvHours = findViewById(R.id.tv_hours);
+        tvBreak = findViewById(R.id.tv_break);
+        tvClosedDays = findViewById(R.id.tv_closed_days);
+        tvPhone = findViewById(R.id.tv_phone);
+        tvAddress = findViewById(R.id.tv_address);
+        tvMenuEmpty = findViewById(R.id.tv_menu_empty);
+        breakRow = findViewById(R.id.break_row);
+        closedRow = findViewById(R.id.closed_row);
+        phoneRow = findViewById(R.id.phone_row);
+        progress = findViewById(R.id.progress);
+        rvMenus = findViewById(R.id.rv_menus);
     }
 
-    private void setupImageCarousel() {
-        vpImages = findViewById(R.id.vp_images);
-        indicatorDots = findViewById(R.id.indicator_dots);
-        if (vpImages == null) return;
-
-        // 더미 이미지 (실제로는 서버 URL을 받아 Glide/Picasso로 로드)
-        List<Integer> images = new ArrayList<>(Arrays.asList(0, 0, 0));  // 3장 placeholder
-
-        ImageCarouselAdapter adapter = new ImageCarouselAdapter(images);
-        vpImages.setAdapter(adapter);
-
-        // 페이지 변경 시 인디케이터 동기화
-        vpImages.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                updateIndicator(position, images.size());
-            }
-        });
-
-        updateIndicator(0, images.size());
+    private void setupMenuList() {
+        rvMenus.setLayoutManager(new LinearLayoutManager(this));
+        menuAdapter = new MenuListAdapter(menus);
+        rvMenus.setAdapter(menuAdapter);
     }
 
-    private void updateIndicator(int selectedIndex, int total) {
-        if (indicatorDots == null) return;
+    /** 식당 상세 정보 조회 */
+    private void loadRestaurant() {
+        if (progress != null) progress.setVisibility(View.VISIBLE);
 
-        int activeColor = ContextCompat.getColor(this, R.color.text_primary);
-        int inactiveColor = ContextCompat.getColor(this, R.color.text_hint);
+        RetrofitClient.getApi().getRestaurant(restaurantId)
+                .enqueue(new Callback<RestaurantResponse>() {
+                    @Override
+                    public void onResponse(@NonNull Call<RestaurantResponse> call,
+                                           @NonNull Response<RestaurantResponse> response) {
+                        if (progress != null) progress.setVisibility(View.GONE);
+                        if (response.isSuccessful() && response.body() != null) {
+                            restaurant = response.body();
+                            bindRestaurant(restaurant);
+                        } else {
+                            Toast.makeText(RestaurantDetailActivity.this,
+                                    "식당 정보를 불러오지 못했습니다 (" + response.code() + ")",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
 
-        // 기존 도트 개수가 total과 다르면 재구성
-        if (indicatorDots.getChildCount() != total) {
-            indicatorDots.removeAllViews();
-            float density = getResources().getDisplayMetrics().density;
-            int dotSize = (int) (6 * density);
-            int dotMargin = (int) (4 * density);
-
-            for (int i = 0; i < total; i++) {
-                View dot = new View(this);
-                LinearLayout.LayoutParams params =
-                        new LinearLayout.LayoutParams(dotSize, dotSize);
-                if (i > 0) params.leftMargin = dotMargin;
-                dot.setLayoutParams(params);
-                indicatorDots.addView(dot);
-            }
-        }
-
-        // 색상 갱신
-        for (int i = 0; i < indicatorDots.getChildCount(); i++) {
-            View dot = indicatorDots.getChildAt(i);
-            dot.setBackgroundColor(i == selectedIndex ? activeColor : inactiveColor);
-        }
+                    @Override
+                    public void onFailure(@NonNull Call<RestaurantResponse> call,
+                                          @NonNull Throwable t) {
+                        if (progress != null) progress.setVisibility(View.GONE);
+                        Toast.makeText(RestaurantDetailActivity.this,
+                                "서버에 연결할 수 없습니다", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    private void setupActionButtons() {
-        // 댓글 아이콘
-        View btnComment = findViewById(R.id.btn_comment);
-        if (btnComment != null) {
-            btnComment.setOnClickListener(v ->
-                    Toast.makeText(this, "댓글 화면으로 이동", Toast.LENGTH_SHORT).show());
+    private void bindRestaurant(RestaurantResponse r) {
+        tvTitle.setText(r.name);
+        tvName.setText(r.name);
+        tvCategory.setText(RestaurantFormat.categoryKo(r.category));
+
+        if (r.description != null && !r.description.isEmpty()) {
+            tvDescription.setVisibility(View.VISIBLE);
+            tvDescription.setText(r.description);
+        } else {
+            tvDescription.setVisibility(View.GONE);
         }
 
-        // 찜 아이콘 (토글)
-        View btnFavorite = findViewById(R.id.btn_favorite);
-        if (btnFavorite != null) {
-            btnFavorite.setOnClickListener(v -> {
-                isFavorited = !isFavorited;
-                String message = isFavorited ? "찜 추가됨" : "찜 해제됨";
-                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        tvHours.setText(RestaurantFormat.openHours(r.openTime, r.closeTime));
+        tvAddress.setText(r.address != null ? r.address : "-");
 
-                if (btnFavorite instanceof android.widget.ImageView) {
-                    ((android.widget.ImageView) btnFavorite).setColorFilter(
-                            isFavorited ? Color.RED
-                                    : ContextCompat.getColor(this, R.color.text_primary));
-                }
-            });
+        // 브레이크타임 (둘 다 있을 때만)
+        if (r.breakStartTime != null && r.breakEndTime != null) {
+            breakRow.setVisibility(View.VISIBLE);
+            tvBreak.setText(RestaurantFormat.openHours(r.breakStartTime, r.breakEndTime));
+        }
+
+        // 휴무일
+        if (r.closedDays != null && !r.closedDays.isEmpty()) {
+            closedRow.setVisibility(View.VISIBLE);
+            tvClosedDays.setText(r.closedDays);
+        }
+
+        // 전화번호
+        if (r.phoneNumber != null && !r.phoneNumber.isEmpty()) {
+            phoneRow.setVisibility(View.VISIBLE);
+            tvPhone.setText(r.phoneNumber);
         }
     }
 
-    private void setupMapButton() {
-        View btnMap = findViewById(R.id.btn_map_view);
-        if (btnMap != null) {
-            btnMap.setOnClickListener(v -> {
-                TextView tvAddress = findViewById(R.id.tv_address);
-                TextView tvDetail = findViewById(R.id.tv_address_detail);
+    /** 식당 메뉴 목록 조회 */
+    private void loadMenus() {
+        RetrofitClient.getApi().getMenus(restaurantId)
+                .enqueue(new Callback<List<MenuResponse>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<List<MenuResponse>> call,
+                                           @NonNull Response<List<MenuResponse>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            menus.clear();
+                            menus.addAll(response.body());
+                            menuAdapter.notifyDataSetChanged();
+                            updateMenuEmptyState();
+                        } else {
+                            updateMenuEmptyState();
+                        }
+                    }
 
-                Intent intent = new Intent(this, MapActivity.class);
-                if (tvAddress != null) {
-                    intent.putExtra(MapActivity.EXTRA_ADDRESS,
-                            tvAddress.getText().toString());
-                }
-                if (tvDetail != null) {
-                    intent.putExtra(MapActivity.EXTRA_ADDRESS_DETAIL,
-                            tvDetail.getText().toString());
-                }
-                startActivity(intent);
-            });
+                    @Override
+                    public void onFailure(@NonNull Call<List<MenuResponse>> call,
+                                          @NonNull Throwable t) {
+                        updateMenuEmptyState();
+                    }
+                });
+    }
+
+    private void updateMenuEmptyState() {
+        if (tvMenuEmpty != null) {
+            tvMenuEmpty.setVisibility(menus.isEmpty() ? View.VISIBLE : View.GONE);
         }
     }
 }

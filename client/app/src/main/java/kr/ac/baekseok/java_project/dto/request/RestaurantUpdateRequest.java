@@ -1,8 +1,6 @@
 package kr.ac.baekseok.java_project.dto.request;
 
-import kr.ac.baekseok.java_project.dto.ApiTime;
-
-/** 식당 정보 수정 요청 (OWNER 권한) */
+/** 식당 정보 수정 요청 (OWNER 권한). 시간은 "HH:mm:ss" 문자열. */
 public class RestaurantUpdateRequest {
     public String name;
     public String category;
@@ -11,9 +9,9 @@ public class RestaurantUpdateRequest {
     public double longitude;
     public String phoneNumber;
     public String description;
-    public ApiTime openTime;
-    public ApiTime closeTime;
-    public ApiTime breakStartTime;
-    public ApiTime breakEndTime;
+    public String openTime;
+    public String closeTime;
+    public String breakStartTime;
+    public String breakEndTime;
     public String closedDays;
 }

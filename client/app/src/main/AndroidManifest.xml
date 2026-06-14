@@ -98,6 +98,18 @@
         <activity android:name=".activity.TestActivity"
             android:exported="false"/>
 
+        <activity android:name=".activity.PreferenceEditActivity"
+            android:exported="false" />
+        <activity android:name=".activity.PasswordChangeActivity"
+            android:exported="false"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+
+        <activity android:name=".activity.RestaurantFormActivity" android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".activity.MenuFormActivity" android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".activity.OwnerRestaurantActivity" android:exported="false" />
+        <activity android:name=".activity.OwnerReservationActivity" android:exported="false" />
     </application>
 
 </manifest>
