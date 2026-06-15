@@ -17,9 +17,14 @@ import com.team3imple.barosiksa.domain.reservations.entity.ReservationStatus;
 import com.team3imple.barosiksa.domain.reservations.repository.ReservationRepository;
 import com.team3imple.barosiksa.domain.restaurants.entity.Restaurant;
 import com.team3imple.barosiksa.domain.restaurants.repository.RestaurantRepository;
+import com.team3imple.barosiksa.domain.tables.dto.TableResponse;
+import com.team3imple.barosiksa.domain.tables.entity.RestaurantTable;
+import com.team3imple.barosiksa.domain.tables.entity.TableStatus;
+import com.team3imple.barosiksa.domain.tables.repository.TableRepository;
 import com.team3imple.barosiksa.global.error.CustomException;
 import com.team3imple.barosiksa.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +41,8 @@ public class ReservationService {
     private final MemberRepository memberRepository;
     private final RestaurantRepository restaurantRepository;
     private final MenuRepository menuRepository;
+    private final TableRepository tableRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public Long createReservation(Long memberId, Long restaurantId, ReservationCreateRequest request) {
@@ -44,6 +51,16 @@ public class ReservationService {
 
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+
+        RestaurantTable table = tableRepository.findById(request.tableId())
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+
+        if (!table.getRestaurant().getId().equals(restaurantId)) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (table.getStatus() != TableStatus.AVAILABLE) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
 
         List<Long> menuIds = request.items().stream()
                 .map(ReservationMenuItemRequest::menuId)
@@ -65,9 +82,13 @@ public class ReservationService {
             totalPrice += menu.getPrice() * item.quantity();
         }
 
+        // 테이블 → RESERVED
+        table.updateStatus(TableStatus.RESERVED);
+
         Reservation reservation = Reservation.builder()
                 .member(member)
                 .restaurant(restaurant)
+                .table(table)
                 .reservationTime(request.reservationTime())
                 .status(ReservationStatus.PENDING)
                 .totalPrice(totalPrice)
@@ -81,11 +102,19 @@ public class ReservationService {
                     .reservation(savedReservation)
                     .menu(menu)
                     .quantity(item.quantity())
-                    .orderedPrice(menu.getPrice()) // 예약 당시 가격 스냅샷
+                    .orderedPrice(menu.getPrice())
                     .build();
-
             reservationItemRepository.save(reservationItem);
         }
+
+        // 테이블 상태 변경 브로드캐스트
+        broadcastTable(restaurantId, table);
+
+        // 업주에게 새 예약 알림 브로드캐스트
+        messagingTemplate.convertAndSend(
+                "/topic/restaurant/" + restaurantId + "/reservations",
+                savedReservation.getId()
+        );
 
         return savedReservation.getId();
     }
@@ -109,7 +138,8 @@ public class ReservationService {
     }
 
     @Transactional
-    public void updateReservationStatus(Long memberId, Long restaurantId, Long reservationId, ReservationStatusUpdateRequest request) {
+    public void updateReservationStatus(Long memberId, Long restaurantId, Long reservationId,
+                                        ReservationStatusUpdateRequest request) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
 
@@ -119,10 +149,23 @@ public class ReservationService {
         }
 
         reservation.updateStatus(request.status());
+
+        // 테이블 상태 동기화
+        RestaurantTable table = reservation.getTable();
+        if (table != null) {
+            TableStatus newTableStatus = switch (request.status()) {
+                case CONFIRMED -> TableStatus.OCCUPIED;
+                case CANCELED, COMPLETED -> TableStatus.AVAILABLE;
+                default -> table.getStatus();
+            };
+            table.updateStatus(newTableStatus);
+            broadcastTable(restaurantId, table);
+        }
     }
 
     @Transactional
-    public void updateReservation(Long memberId, Long restaurantId, Long reservationId, ReservationUpdateRequest request) {
+    public void updateReservation(Long memberId, Long restaurantId, Long reservationId,
+                                  ReservationUpdateRequest request) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
 
@@ -156,7 +199,6 @@ public class ReservationService {
         }
 
         reservation.updateReservationInfo(request.reservationTime(), newTotalPrice);
-
         reservationItemRepository.deleteByReservationId(reservationId);
 
         for (ReservationMenuItemRequest item : request.items()) {
@@ -167,7 +209,6 @@ public class ReservationService {
                     .quantity(item.quantity())
                     .orderedPrice(menu.getPrice())
                     .build();
-
             reservationItemRepository.save(reservationItem);
         }
     }
@@ -187,8 +228,21 @@ public class ReservationService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        reservationItemRepository.deleteByReservationId(reservationId);
+        // 예약 취소 시 테이블 다시 AVAILABLE로
+        RestaurantTable table = reservation.getTable();
+        if (table != null) {
+            table.updateStatus(TableStatus.AVAILABLE);
+            broadcastTable(restaurantId, table);
+        }
 
+        reservationItemRepository.deleteByReservationId(reservationId);
         reservationRepository.delete(reservation);
+    }
+
+    private void broadcastTable(Long restaurantId, RestaurantTable table) {
+        messagingTemplate.convertAndSend(
+                "/topic/restaurant/" + restaurantId + "/tables",
+                new TableResponse(table)
+        );
     }
 }

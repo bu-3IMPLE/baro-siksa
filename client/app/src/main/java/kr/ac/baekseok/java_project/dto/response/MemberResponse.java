@@ -6,4 +6,9 @@ public class MemberResponse {
     public String username;
     public String email;
     public String foodPreference;
+    public String role; // "USER" | "OWNER" | "ADMIN"
+
+    public boolean isOwner() {
+        return "OWNER".equals(role) || "ADMIN".equals(role);
+    }
 }

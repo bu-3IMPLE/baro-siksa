@@ -2,16 +2,14 @@ package kr.ac.baekseok.java_project.dto.request;
 
 import java.util.List;
 
-/**
- * 예약 생성 요청 (USER 권한)
- * reservationTime: ISO-8601 형식 문자열 (예: "2025-12-01T18:30:00")
- */
 public class ReservationCreateRequest {
+    public Long tableId;
     public String reservationTime;
     public List<ReservationMenuItemRequest> items;
 
-    public ReservationCreateRequest(String reservationTime,
+    public ReservationCreateRequest(Long tableId, String reservationTime,
                                     List<ReservationMenuItemRequest> items) {
+        this.tableId = tableId;
         this.reservationTime = reservationTime;
         this.items = items;
     }

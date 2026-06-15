@@ -122,6 +122,21 @@
                 android:textColor="@color/text_primary"
                 android:textSize="15sp" />
 
+            <!-- 테이블 잠금 관리 버튼 -->
+            <TextView
+                android:id="@+id/btn_manage_tables"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_card_border"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:text="🪑  테이블 잠금 관리"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp" />
+
             <!-- 메뉴 섹션 헤더 -->
             <LinearLayout
                 android:layout_width="match_parent"

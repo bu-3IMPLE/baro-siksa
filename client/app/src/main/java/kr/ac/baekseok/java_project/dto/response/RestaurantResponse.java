@@ -2,8 +2,6 @@ package kr.ac.baekseok.java_project.dto.response;
 
 import java.io.Serializable;
 
-import kr.ac.baekseok.java_project.dto.ApiTime;
-
 /** 식당 상세/목록 응답 */
 public class RestaurantResponse implements Serializable {
     public long id;
@@ -14,9 +12,9 @@ public class RestaurantResponse implements Serializable {
     public double longitude;
     public String phoneNumber;
     public String description;
-    public ApiTime openTime;
-    public ApiTime closeTime;
-    public ApiTime breakStartTime;
-    public ApiTime breakEndTime;
+    public String openTime;       // "HH:mm:ss"
+    public String closeTime;      // "HH:mm:ss"
+    public String breakStartTime; // "HH:mm:ss" or null
+    public String breakEndTime;   // "HH:mm:ss" or null
     public String closedDays;
 }

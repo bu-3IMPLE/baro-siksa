@@ -12,11 +12,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 import kr.ac.baekseok.java_project.R;
 import kr.ac.baekseok.java_project.adapter.OwnerReservationAdapter;
 import kr.ac.baekseok.java_project.dto.request.ReservationStatusUpdateRequest;
 import kr.ac.baekseok.java_project.dto.response.OwnerReservationResponse;
 import kr.ac.baekseok.java_project.network.RetrofitClient;
+import ua.naiksoftware.stomp.Stomp;
+import ua.naiksoftware.stomp.StompClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +32,7 @@ import retrofit2.Response;
 
 /**
  * 사장님 예약 관리 화면.
- * getReservationsForOwner로 예약 목록 조회 + updateReservationStatus로 상태 변경.
+ * WebSocket으로 새 예약 실시간 알림 + REST로 목록 조회/상태 변경.
  */
 public class OwnerReservationActivity extends AppCompatActivity {
 
@@ -36,11 +41,15 @@ public class OwnerReservationActivity extends AppCompatActivity {
     private RecyclerView rvReservations;
     private ProgressBar progress;
     private TextView tvEmpty;
+    private TextView tvWsStatus;
 
     private final List<OwnerReservationResponse> reservations = new ArrayList<>();
     private OwnerReservationAdapter adapter;
 
     private long restaurantId = -1;
+
+    private StompClient stompClient;
+    private CompositeDisposable compositeDisposable;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -58,6 +67,7 @@ public class OwnerReservationActivity extends AppCompatActivity {
         rvReservations = findViewById(R.id.rv_reservations);
         progress = findViewById(R.id.progress);
         tvEmpty = findViewById(R.id.tv_empty);
+        tvWsStatus = findViewById(R.id.tv_ws_status);
 
         View btnBack = findViewById(R.id.btn_back);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
@@ -67,6 +77,48 @@ public class OwnerReservationActivity extends AppCompatActivity {
         rvReservations.setAdapter(adapter);
 
         loadReservations();
+        connectWebSocket();
+    }
+
+    private void connectWebSocket() {
+        String wsUrl = RetrofitClient.BASE_URL.replaceFirst("^http", "ws") + "ws";
+        compositeDisposable = new CompositeDisposable();
+        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, wsUrl);
+
+        compositeDisposable.add(
+                stompClient.lifecycle()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(event -> {
+                            if (tvWsStatus == null) return;
+                            switch (event.getType()) {
+                                case OPENED:
+                                    tvWsStatus.setText("실시간 알림 켜짐");
+                                    break;
+                                case CLOSED:
+                                    tvWsStatus.setText("알림 꺼짐");
+                                    break;
+                                case ERROR:
+                                    tvWsStatus.setText("연결 오류");
+                                    break;
+                                default:
+                                    break;
+                            }
+                        })
+        );
+
+        // 새 예약 발생 시 목록 자동 갱신
+        compositeDisposable.add(
+                stompClient.topic("/topic/restaurant/" + restaurantId + "/reservations")
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(message -> {
+                            toast("새 예약이 들어왔습니다!");
+                            loadReservations();
+                        }, throwable -> {})
+        );
+
+        stompClient.connect();
     }
 
     private void loadReservations() {
@@ -92,6 +144,7 @@ public class OwnerReservationActivity extends AppCompatActivity {
                             updateEmpty();
                         }
                     }
+
                     @Override
                     public void onFailure(@NonNull Call<List<OwnerReservationResponse>> call,
                                           @NonNull Throwable t) {
@@ -102,7 +155,6 @@ public class OwnerReservationActivity extends AppCompatActivity {
                 });
     }
 
-    /** 예약 상태 변경 (확정/거절/완료) */
     private void changeStatus(OwnerReservationResponse r, String newStatus) {
         ReservationStatusUpdateRequest req = new ReservationStatusUpdateRequest(newStatus);
 
@@ -114,18 +166,26 @@ public class OwnerReservationActivity extends AppCompatActivity {
                                            @NonNull Response<Void> response) {
                         if (response.isSuccessful()) {
                             toast("상태가 변경되었습니다");
-                            loadReservations();  // 목록 새로고침
+                            loadReservations();
                         } else if (response.code() == 403) {
                             toast("OWNER 권한이 필요합니다");
                         } else {
                             toast("변경 실패 (" + response.code() + ")");
                         }
                     }
+
                     @Override
                     public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                         toast("서버에 연결할 수 없습니다");
                     }
                 });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (compositeDisposable != null) compositeDisposable.dispose();
+        if (stompClient != null) stompClient.disconnect();
     }
 
     private void updateEmpty() {

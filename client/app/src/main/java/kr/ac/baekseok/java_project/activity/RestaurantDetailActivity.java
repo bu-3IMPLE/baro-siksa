@@ -73,9 +73,13 @@ public class RestaurantDetailActivity extends AppCompatActivity {
 
         View btnReserve = findViewById(R.id.btn_reserve);
         if (btnReserve != null) {
-            btnReserve.setOnClickListener(v ->
-                    Toast.makeText(this, "예약 기능은 다음 단계에서 연결됩니다",
-                            Toast.LENGTH_SHORT).show());
+            btnReserve.setOnClickListener(v -> {
+                Intent intent = new Intent(this, TableStatusActivity.class);
+                intent.putExtra(TableStatusActivity.EXTRA_RESTAURANT_ID, restaurantId);
+                intent.putExtra(TableStatusActivity.EXTRA_RESTAURANT_NAME,
+                        getIntent().getStringExtra(EXTRA_RESTAURANT_NAME));
+                startActivity(intent);
+            });
         }
 
         if (restaurantId < 0) {

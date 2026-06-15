@@ -4,7 +4,6 @@ import com.team3imple.barosiksa.domain.restaurants.entity.RestaurantCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.math.BigDecimal;
 import java.time.LocalTime;
 
 public record RestaurantCreateRequest(
@@ -16,12 +15,6 @@ public record RestaurantCreateRequest(
 
         @NotBlank(message = "주소는 필수입니다.")
         String address,
-
-        @NotNull(message = "위도는 필수입니다.")
-        BigDecimal latitude,
-
-        @NotNull(message = "경도는 필수입니다.")
-        BigDecimal longitude,
 
         String phoneNumber,
         String description,

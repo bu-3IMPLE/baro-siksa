@@ -4,14 +4,18 @@ import com.team3imple.barosiksa.domain.member.dto.request.*;
 import com.team3imple.barosiksa.domain.member.dto.response.MemberLoginResponse;
 import com.team3imple.barosiksa.domain.member.dto.response.MemberResponse;
 import com.team3imple.barosiksa.domain.member.service.MemberService;
+import com.team3imple.barosiksa.domain.reservations.dto.response.ReservationResponse;
+import com.team3imple.barosiksa.domain.reservations.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @Tag(name = "Member", description = "회원 가입, 로그인, 마이페이지 등 회원 관련 API")
 @RestController
@@ -19,6 +23,7 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class MemberController {
     private final MemberService memberService;
+    private final ReservationService reservationService;
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
@@ -78,6 +83,14 @@ public class MemberController {
         memberService.changePassword(memberId, request);
 
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "내 예약 목록 조회", description = "현재 로그인한 회원의 전체 예약 목록을 조회합니다.")
+    @GetMapping("/me/reservations")
+    @PreAuthorize("hasAnyRole('USER','OWNER','ADMIN')")
+    public ResponseEntity<List<ReservationResponse>> getMyReservations(Principal principal) {
+        Long memberId = Long.valueOf(principal.getName());
+        return ResponseEntity.ok(reservationService.getMyReservations(memberId));
     }
 
     @Operation(summary = "회원 탈퇴", description = "현재 로그인한 회원을 탈퇴 처리합니다.")

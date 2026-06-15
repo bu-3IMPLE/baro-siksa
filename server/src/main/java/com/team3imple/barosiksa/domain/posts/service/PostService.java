@@ -27,6 +27,12 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
+    public Page<PostResponse> getMyPosts(Long memberId, Pageable pageable) {
+        return postRepository.findByMemberIdOrderByIdDesc(memberId, pageable)
+                .map(PostResponse::new);
+    }
+
+    @Transactional(readOnly = true)
     public PostDetailResponse getPost(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));

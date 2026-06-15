@@ -47,6 +47,17 @@ public class TimePickerHelper {
         if (time != null) target.setText(time.toDisplay());
     }
 
+    /** "HH:mm:ss" 문자열로 초기화 (서버 응답값 세팅용) */
+    public void setValue(String timeStr) {
+        if (timeStr == null) return;
+        String[] parts = timeStr.split(":");
+        if (parts.length >= 2) {
+            try {
+                setValue(new ApiTime(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));
+            } catch (NumberFormatException ignored) {}
+        }
+    }
+
     public boolean hasValue() {
         return selected != null;
     }

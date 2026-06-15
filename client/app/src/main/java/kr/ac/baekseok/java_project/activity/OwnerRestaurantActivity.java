@@ -126,6 +126,16 @@ public class OwnerRestaurantActivity extends AppCompatActivity {
             i.putExtra(OwnerReservationActivity.EXTRA_RESTAURANT_ID, restaurantId);
             startActivity(i);
         });
+
+        // 테이블 잠금 관리
+        setClick(R.id.btn_manage_tables, v -> {
+            Intent i = new Intent(this, TableStatusActivity.class);
+            i.putExtra(TableStatusActivity.EXTRA_RESTAURANT_ID, restaurantId);
+            i.putExtra(TableStatusActivity.EXTRA_RESTAURANT_NAME,
+                    tvName != null ? tvName.getText().toString() : "");
+            i.putExtra(TableStatusActivity.EXTRA_IS_OWNER, true);
+            startActivity(i);
+        });
     }
 
     /** 내 식당 유무에 따라 화면 전환 */

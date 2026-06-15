@@ -5,14 +5,12 @@ package kr.ac.baekseok.java_project.dto.request;
  * category: KOREAN, JAPANESE, CHINESE, WESTERN, ASIAN, CAFE, ETC
  *
  * 시간 필드는 "HH:mm:ss" 문자열 (예: "09:00:00").
- * 서버 LocalTime 역직렬화가 문자열을 기대하므로 객체가 아닌 문자열로 보낸다.
+ * 위도/경도는 서버에서 주소로 자동 조회한다.
  */
 public class RestaurantCreateRequest {
     public String name;
     public String category;
     public String address;
-    public double latitude;
-    public double longitude;
     public String phoneNumber;
     public String description;
     public String openTime;       // "09:00:00"

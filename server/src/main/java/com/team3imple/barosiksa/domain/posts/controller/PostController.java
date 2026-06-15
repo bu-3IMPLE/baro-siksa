@@ -37,6 +37,15 @@ public class PostController {
         return ResponseEntity.ok(postService.getPosts(pageable));
     }
 
+    @Operation(summary = "내가 쓴 게시글 목록", description = "로그인한 사용자가 작성한 게시글을 최신순 페이징으로 조회합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<Page<PostResponse>> getMyPosts(
+            Principal principal,
+            @PageableDefault(size = 4, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        Long memberId = Long.valueOf(principal.getName());
+        return ResponseEntity.ok(postService.getMyPosts(memberId, pageable));
+    }
+
     @Operation(summary = "게시글 상세 조회")
     @GetMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> getPost(@PathVariable Long postId) {

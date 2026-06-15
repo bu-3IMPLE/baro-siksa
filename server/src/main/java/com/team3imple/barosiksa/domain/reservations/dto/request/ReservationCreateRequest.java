@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ReservationCreateRequest(
+        @NotNull(message = "테이블을 선택해주세요.")
+        Long tableId,
+
         @NotNull(message = "예약 시간은 필수입니다.")
         LocalDateTime reservationTime,
 

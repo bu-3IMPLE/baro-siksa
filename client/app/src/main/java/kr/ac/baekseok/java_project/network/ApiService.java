@@ -97,6 +97,28 @@ public interface ApiService {
     @DELETE("api/restaurants/{restaurantId}")
     Call<Void> deleteRestaurant(@Path("restaurantId") long restaurantId);
 
+    // ========================= 테이블 (Table) =========================
+
+    /** 테이블 목록 조회 (실시간 상태) */
+    @GET("api/restaurants/{restaurantId}/tables")
+    Call<List<TableResponse>> getTables(@Path("restaurantId") long restaurantId);
+
+    /** 테이블 추가 (OWNER) → tableId */
+    @POST("api/restaurants/{restaurantId}/tables")
+    Call<Long> addTable(@Path("restaurantId") long restaurantId,
+                        @Body TableCreateRequest request);
+
+    /** 테이블 삭제 (OWNER) */
+    @DELETE("api/restaurants/{restaurantId}/tables/{tableId}")
+    Call<Void> deleteTable(@Path("restaurantId") long restaurantId,
+                           @Path("tableId") long tableId);
+
+    /** 테이블 상태 수동 변경 (OWNER/ADMIN) - AVAILABLE 또는 OCCUPIED */
+    @PATCH("api/restaurants/{restaurantId}/tables/{tableId}/status")
+    Call<Void> updateTableStatus(@Path("restaurantId") long restaurantId,
+                                 @Path("tableId") long tableId,
+                                 @Body TableStatusUpdateRequest request);
+
     // ========================= 메뉴 (Menu) =========================
 
     /** 식당 메뉴 목록 */
@@ -126,9 +148,13 @@ public interface ApiService {
     Call<Long> createReservation(@Path("restaurantId") long restaurantId,
                                  @Body ReservationCreateRequest request);
 
-    /** 내 예약 목록 (USER) */
+    /** 내 전체 예약 목록 */
+    @GET("api/members/me/reservations")
+    Call<List<ReservationResponse>> getMyReservations();
+
+    /** 특정 식당의 내 예약 목록 (레거시, restaurantId 필요 시 사용) */
     @GET("api/restaurants/{restaurantId}/reservations/me")
-    Call<List<ReservationResponse>> getMyReservations(
+    Call<List<ReservationResponse>> getMyReservationsByRestaurant(
             @Path("restaurantId") long restaurantId);
 
     /** 식당 예약 목록 (OWNER) */
@@ -217,6 +243,10 @@ public interface ApiService {
     /** 게시글 목록 (최신순 페이징) */
     @GET("api/posts")
     Call<PagePostResponse> getPosts(@Query("page") int page, @Query("size") int size);
+
+    /** 내가 쓴 게시글 목록 (최신순 페이징) */
+    @GET("api/posts/me")
+    Call<PagePostResponse> getMyPosts(@Query("page") int page, @Query("size") int size);
 
     /** 게시글 상세 */
     @GET("api/posts/{postId}")

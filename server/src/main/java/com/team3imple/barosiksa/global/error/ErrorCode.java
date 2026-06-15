@@ -13,6 +13,7 @@ public enum ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 게시글을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
     UNAUTHORIZED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    ADDRESS_NOT_FOUND(HttpStatus.BAD_REQUEST, "주소로 위치를 찾을 수 없습니다."),
 
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");

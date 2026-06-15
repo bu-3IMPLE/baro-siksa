@@ -87,7 +87,7 @@ public class RestaurantExample {
      * @param menuId        예약할 메뉴 id
      * @param quantity      수량(=인원수 등)
      */
-    public static void createReservation(long restaurantId, String isoDateTime,
+    public static void createReservation(long restaurantId, long tableId, String isoDateTime,
                                          long menuId, int quantity,
                                          DataCallback<Long> callback) {
         ApiService api = RetrofitClient.getApi();
@@ -96,7 +96,7 @@ public class RestaurantExample {
         items.add(new ReservationMenuItemRequest(menuId, quantity));
 
         ReservationCreateRequest request =
-                new ReservationCreateRequest(isoDateTime, items);
+                new ReservationCreateRequest(tableId, isoDateTime, items);
 
         api.createReservation(restaurantId, request).enqueue(new Callback<Long>() {
             @Override

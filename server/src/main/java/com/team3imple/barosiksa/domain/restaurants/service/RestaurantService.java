@@ -11,12 +11,14 @@ import com.team3imple.barosiksa.domain.restaurants.entity.Restaurant;
 import com.team3imple.barosiksa.domain.restaurants.repository.RestaurantRepository;
 import com.team3imple.barosiksa.global.error.CustomException;
 import com.team3imple.barosiksa.global.error.ErrorCode;
+import com.team3imple.barosiksa.global.util.KakaoGeocodingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -25,19 +27,22 @@ import java.util.List;
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final MemberRepository memberRepository;
+    private final KakaoGeocodingService kakaoGeocodingService;
 
     @Transactional
     public Long createRestaurant(Long memberId, RestaurantCreateRequest request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
+        BigDecimal[] coords = kakaoGeocodingService.geocode(request.address());
+
         Restaurant restaurant = Restaurant.builder()
                 .member(member)
                 .name(request.name())
                 .category(request.category())
                 .address(request.address())
-                .latitude(request.latitude())
-                .longitude(request.longitude())
+                .latitude(coords[0])
+                .longitude(coords[1])
                 .phoneNumber(request.phoneNumber())
                 .description(request.description())
                 .openTime(request.openTime())
@@ -74,12 +79,14 @@ public class RestaurantService {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
+        BigDecimal[] coords = kakaoGeocodingService.geocode(request.address());
+
         restaurant.updateRestaurantInfo(
                 request.name(),
                 request.category(),
                 request.address(),
-                request.latitude(),
-                request.longitude(),
+                coords[0],
+                coords[1],
                 request.phoneNumber(),
                 request.description(),
                 request.openTime(),

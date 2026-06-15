@@ -2,6 +2,7 @@ package com.team3imple.barosiksa.domain.reservations.entity;
 
 import com.team3imple.barosiksa.domain.member.entity.Member;
 import com.team3imple.barosiksa.domain.restaurants.entity.Restaurant;
+import com.team3imple.barosiksa.domain.tables.entity.RestaurantTable;
 import com.team3imple.barosiksa.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -29,6 +30,10 @@ public class Reservation extends BaseTimeEntity {
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "table_id")
+    private RestaurantTable table;
+
     @Column(nullable = false)
     private LocalDateTime reservationTime;
 
@@ -40,9 +45,11 @@ public class Reservation extends BaseTimeEntity {
     private Integer totalPrice;
 
     @Builder
-    public Reservation(Member member, Restaurant restaurant, LocalDateTime reservationTime, ReservationStatus status, Integer totalPrice) {
+    public Reservation(Member member, Restaurant restaurant, RestaurantTable table,
+                       LocalDateTime reservationTime, ReservationStatus status, Integer totalPrice) {
         this.member = member;
         this.restaurant = restaurant;
+        this.table = table;
         this.reservationTime = reservationTime;
         this.status = status;
         this.totalPrice = totalPrice;

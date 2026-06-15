@@ -33,19 +33,18 @@ import retrofit2.Response;
  *  - 수정: EXTRA_RESTAURANT_ID 전달 → 기존 정보 로드 후 updateRestaurant
  *
  * 카테고리 enum: KOREAN, JAPANESE, CHINESE, WESTERN, ASIAN, CAFE, ETC
+ * 위도/경도는 서버에서 주소를 기반으로 카카오 API를 통해 자동 조회한다.
  */
 public class RestaurantFormActivity extends AppCompatActivity {
 
     public static final String EXTRA_RESTAURANT_ID = "extra_restaurant_id";
 
-    // 카테고리 코드와 화면 표시용 한글 (순서 일치)
     private static final String[] CATEGORY_CODES =
             {"KOREAN", "JAPANESE", "CHINESE", "WESTERN", "ASIAN", "CAFE", "ETC"};
     private static final String[] CATEGORY_LABELS =
             {"한식", "일식", "중식", "양식", "아시안", "카페", "기타"};
 
-    private EditText etName, etAddress, etLatitude, etLongitude,
-            etPhone, etClosedDays, etDescription;
+    private EditText etName, etAddress, etPhone, etClosedDays, etDescription;
     private Spinner spinnerCategory;
     private TextView tvScreenTitle, btnSubmit, tvOpenTime, tvCloseTime;
 
@@ -86,8 +85,6 @@ public class RestaurantFormActivity extends AppCompatActivity {
     private void bindViews() {
         etName = findViewById(R.id.et_name);
         etAddress = findViewById(R.id.et_address);
-        etLatitude = findViewById(R.id.et_latitude);
-        etLongitude = findViewById(R.id.et_longitude);
         etPhone = findViewById(R.id.et_phone);
         etClosedDays = findViewById(R.id.et_closed_days);
         etDescription = findViewById(R.id.et_description);
@@ -112,7 +109,6 @@ public class RestaurantFormActivity extends AppCompatActivity {
         closeTimeHelper.attach(this);
     }
 
-    /** 수정 모드: 기존 식당 정보를 불러와 입력칸 채우기 */
     private void loadExisting() {
         RetrofitClient.getApi().getRestaurant(restaurantId)
                 .enqueue(new Callback<RestaurantResponse>() {
@@ -139,8 +135,6 @@ public class RestaurantFormActivity extends AppCompatActivity {
     private void fillForm(RestaurantResponse r) {
         etName.setText(r.name);
         etAddress.setText(r.address);
-        etLatitude.setText(String.valueOf(r.latitude));
-        etLongitude.setText(String.valueOf(r.longitude));
         if (r.phoneNumber != null) etPhone.setText(r.phoneNumber);
         if (r.closedDays != null) etClosedDays.setText(r.closedDays);
         if (r.description != null) etDescription.setText(r.description);
@@ -148,7 +142,6 @@ public class RestaurantFormActivity extends AppCompatActivity {
         openTimeHelper.setValue(r.openTime);
         closeTimeHelper.setValue(r.closeTime);
 
-        // 카테고리 선택
         int idx = indexOfCategory(r.category);
         if (idx >= 0) spinnerCategory.setSelection(idx);
     }
@@ -166,24 +159,11 @@ public class RestaurantFormActivity extends AppCompatActivity {
 
         String name = etName.getText().toString().trim();
         String address = etAddress.getText().toString().trim();
-        String latStr = etLatitude.getText().toString().trim();
-        String lngStr = etLongitude.getText().toString().trim();
 
-        // 필수값 검증
         if (name.isEmpty()) { toast("상호명을 입력하세요"); return; }
         if (address.isEmpty()) { toast("주소를 입력하세요"); return; }
-        if (latStr.isEmpty() || lngStr.isEmpty()) { toast("위도/경도를 입력하세요"); return; }
         if (!openTimeHelper.hasValue()) { toast("오픈 시간을 선택하세요"); return; }
         if (!closeTimeHelper.hasValue()) { toast("마감 시간을 선택하세요"); return; }
-
-        double lat, lng;
-        try {
-            lat = Double.parseDouble(latStr);
-            lng = Double.parseDouble(lngStr);
-        } catch (NumberFormatException e) {
-            toast("위도/경도는 숫자로 입력하세요");
-            return;
-        }
 
         String category = CATEGORY_CODES[spinnerCategory.getSelectedItemPosition()];
         String phone = etPhone.getText().toString().trim();
@@ -196,23 +176,19 @@ public class RestaurantFormActivity extends AppCompatActivity {
         btnSubmit.setEnabled(false);
 
         if (isEditMode) {
-            doUpdate(name, category, address, lat, lng, phone, description,
-                    openTime, closeTime, closedDays);
+            doUpdate(name, category, address, phone, description, openTime, closeTime, closedDays);
         } else {
-            doCreate(name, category, address, lat, lng, phone, description,
-                    openTime, closeTime, closedDays);
+            doCreate(name, category, address, phone, description, openTime, closeTime, closedDays);
         }
     }
 
     private void doCreate(String name, String category, String address,
-                          double lat, double lng, String phone, String description,
+                          String phone, String description,
                           ApiTime openTime, ApiTime closeTime, String closedDays) {
         RestaurantCreateRequest req = new RestaurantCreateRequest();
         req.name = name;
         req.category = category;
         req.address = address;
-        req.latitude = lat;
-        req.longitude = lng;
         req.phoneNumber = phone.isEmpty() ? null : phone;
         req.description = description.isEmpty() ? null : description;
         req.openTime = openTime.toServerString();
@@ -226,12 +202,13 @@ public class RestaurantFormActivity extends AppCompatActivity {
                 btnSubmit.setEnabled(true);
                 if (response.isSuccessful() && response.body() != null) {
                     long newId = response.body();
-                    // 내 식당으로 저장
                     OwnerStore.saveRestaurantId(RestaurantFormActivity.this, newId);
                     Toast.makeText(RestaurantFormActivity.this,
                             "식당이 등록되었습니다", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
+                } else if (response.code() == 400) {
+                    toast("주소로 위치를 찾을 수 없습니다. 정확한 주소를 입력하세요.");
                 } else if (response.code() == 403) {
                     toast("OWNER 권한이 필요합니다");
                 } else {
@@ -248,14 +225,12 @@ public class RestaurantFormActivity extends AppCompatActivity {
     }
 
     private void doUpdate(String name, String category, String address,
-                          double lat, double lng, String phone, String description,
+                          String phone, String description,
                           ApiTime openTime, ApiTime closeTime, String closedDays) {
         RestaurantUpdateRequest req = new RestaurantUpdateRequest();
         req.name = name;
         req.category = category;
         req.address = address;
-        req.latitude = lat;
-        req.longitude = lng;
         req.phoneNumber = phone.isEmpty() ? null : phone;
         req.description = description.isEmpty() ? null : description;
         req.openTime = openTime.toServerString();
@@ -274,6 +249,8 @@ public class RestaurantFormActivity extends AppCompatActivity {
                                     "수정되었습니다", Toast.LENGTH_SHORT).show();
                             setResult(RESULT_OK);
                             finish();
+                        } else if (response.code() == 400) {
+                            toast("주소로 위치를 찾을 수 없습니다. 정확한 주소를 입력하세요.");
                         } else if (response.code() == 403) {
                             toast("OWNER 권한이 필요합니다");
                         } else {

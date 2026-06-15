@@ -1,18 +1,21 @@
 package kr.ac.baekseok.java_project.util;
 
-import kr.ac.baekseok.java_project.dto.ApiTime;
-
 /**
  * 식당 정보 표시용 헬퍼.
  */
 public class RestaurantFormat {
 
-    /** 영업시간을 "09:30 ~ 21:00" 형식으로 */
-    public static String openHours(ApiTime open, ApiTime close) {
+    /** 영업시간을 "09:30 ~ 21:00" 형식으로. 서버 "HH:mm:ss" 문자열을 받는다. */
+    public static String openHours(String open, String close) {
         if (open == null && close == null) return "영업시간 정보 없음";
-        String o = open != null ? open.toDisplay() : "-";
-        String c = close != null ? close.toDisplay() : "-";
-        return o + " ~ " + c;
+        return fmt(open) + " ~ " + fmt(close);
+    }
+
+    /** "HH:mm:ss" → "HH:mm" */
+    private static String fmt(String t) {
+        if (t == null) return "-";
+        String[] p = t.split(":");
+        return p.length >= 2 ? p[0] + ":" + p[1] : t;
     }
 
     /** 카테고리 영문 코드 → 한글 */

@@ -20,18 +20,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * 마이 페이지 - 실제 서버 데이터(getMyInfo) 연동.
- *
- * 서버에서 가져오는 것: username(닉네임), email, foodPreference
- *
- * 주의:
- *  - 닉네임(username) 변경, 음식취향, 비밀번호 변경 가능.
- *  - 프로필 사진 API 없어서 보류.
- */
 public class MyPageActivity extends BaseActivity {
 
     private TextView tvNickname;
+    private View sectionOwner;
 
     private MemberResponse myInfo;
 
@@ -52,13 +44,12 @@ public class MyPageActivity extends BaseActivity {
         bindViews();
         registerLaunchers();
         setupButtons();
-
-        // 화면 진입 시 서버에서 내 정보 로드
         loadMyInfo();
     }
 
     private void bindViews() {
         tvNickname = findViewById(R.id.tv_nickname);
+        sectionOwner = findViewById(R.id.section_owner);
     }
 
     private void registerLaunchers() {
@@ -86,12 +77,7 @@ public class MyPageActivity extends BaseActivity {
                 });
     }
 
-    /**
-     * 서버에서 내 정보를 가져와 화면에 반영한다.
-     * 로그인 시 저장한 토큰이 AuthInterceptor로 자동 첨부된다.
-     */
     private void loadMyInfo() {
-        // 토큰이 없으면 로그인 안 된 상태 → 로그인 화면으로
         if (AuthInterceptor.getToken(this) == null) {
             Toast.makeText(this, "로그인이 필요합니다", Toast.LENGTH_SHORT).show();
             goToLogin();
@@ -108,7 +94,6 @@ public class MyPageActivity extends BaseActivity {
                     myInfo = response.body();
                     bindMyInfo();
                 } else if (response.code() == 401) {
-                    // 토큰 만료/무효 → 로그인 화면으로
                     Toast.makeText(MyPageActivity.this,
                             "로그인이 만료되었습니다. 다시 로그인해 주세요.",
                             Toast.LENGTH_SHORT).show();
@@ -123,8 +108,7 @@ public class MyPageActivity extends BaseActivity {
             }
 
             @Override
-            public void onFailure(@NonNull Call<MemberResponse> call,
-                                  @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<MemberResponse> call, @NonNull Throwable t) {
                 Toast.makeText(MyPageActivity.this,
                         "서버에 연결할 수 없습니다", Toast.LENGTH_SHORT).show();
                 if (tvNickname != null) tvNickname.setText("닉네임");
@@ -134,9 +118,14 @@ public class MyPageActivity extends BaseActivity {
 
     private void bindMyInfo() {
         if (myInfo == null) return;
-        // 닉네임(username) 표시
+
         if (tvNickname != null) {
             tvNickname.setText(myInfo.username != null ? myInfo.username : "닉네임");
+        }
+
+        // OWNER / ADMIN 계정이면 업주 관리 섹션 표시
+        if (sectionOwner != null) {
+            sectionOwner.setVisibility(myInfo.isOwner() ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -148,33 +137,31 @@ public class MyPageActivity extends BaseActivity {
             nicknameLauncher.launch(intent);
         });
 
-        // 프로필 변경 → 서버에 API 없음. 안내만.
         setClickListener(R.id.btn_change_profile, v ->
                 Toast.makeText(this,
                         "프로필 사진 변경은 현재 지원되지 않습니다",
                         Toast.LENGTH_SHORT).show());
 
-        // 내가 쓴 게시물 → 리뷰로 대체 예정 (다음 단계)
+        setClickListener(R.id.btn_my_reservations, v ->
+                startActivity(new Intent(this, MyReservationActivity.class)));
+
         setClickListener(R.id.btn_my_posts, v ->
-                Toast.makeText(this, "준비 중입니다 (리뷰 연동 예정)",
-                        Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(this, MyPostsActivity.class)));
 
-        // 내가 쓴 답글 → 준비 중
         setClickListener(R.id.btn_my_replies, v ->
-                startActivity(new Intent(this, OwnerRestaurantActivity.class)));
-                /*Toast.makeText(this, "준비 중입니다",
-                        Toast.LENGTH_SHORT).show());*/
+                Toast.makeText(this, "준비 중입니다", Toast.LENGTH_SHORT).show());
 
-        // 나만의 맛집(음식취향) → 음식취향 수정 화면
         setClickListener(R.id.btn_only_my_restaurants, v -> openPreferenceEdit());
 
-        // 앱 소개 / 공지 / 고객센터 → 정적 화면 (기존 InfoActivity 재사용)
-        setClickListener(R.id.btn_app_intro, v ->
-                openInfo(InfoActivity.TYPE_APP_INTRO));
-        setClickListener(R.id.btn_notice, v ->
-                openInfo(InfoActivity.TYPE_NOTICE));
-        setClickListener(R.id.btn_customer_center, v ->
-                openInfo(InfoActivity.TYPE_CUSTOMER_CENTER));
+        // 업주 전용 - 내 식당 관리
+        setClickListener(R.id.btn_owner_restaurant, v ->
+                startActivity(new Intent(this, OwnerRestaurantActivity.class)));
+
+        setClickListener(R.id.btn_app_intro, v -> openInfo(InfoActivity.TYPE_APP_INTRO));
+        setClickListener(R.id.btn_notice, v -> openInfo(InfoActivity.TYPE_NOTICE));
+        setClickListener(R.id.btn_customer_center, v -> openInfo(InfoActivity.TYPE_CUSTOMER_CENTER));
+
+        setClickListener(R.id.btn_logout, v -> logout());
     }
 
     private void openPreferenceEdit() {
@@ -192,6 +179,18 @@ public class MyPageActivity extends BaseActivity {
         Intent intent = new Intent(this, InfoActivity.class);
         intent.putExtra(InfoActivity.EXTRA_INFO_TYPE, type);
         startActivity(intent);
+    }
+
+    private void logout() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("로그아웃")
+                .setMessage("로그아웃 하시겠습니까?")
+                .setPositiveButton("로그아웃", (dialog, which) -> {
+                    AuthInterceptor.clearToken(this);
+                    goToLogin();
+                })
+                .setNegativeButton("취소", null)
+                .show();
     }
 
     private void goToLogin() {
