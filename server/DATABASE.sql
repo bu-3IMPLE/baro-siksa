@@ -134,3 +134,31 @@ CREATE TABLE reviews
     FOREIGN KEY (reservation_id) REFERENCES reservations (reservation_id),
     INDEX idx_restaurant_id (restaurant_id)
 );
+
+-- 10. Posts 테이블 (members 참조)
+CREATE TABLE posts
+(
+    post_id    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id  BIGINT       NOT NULL,
+    title      VARCHAR(200) NOT NULL,
+    content    TEXT         NOT NULL,
+    is_deleted BOOLEAN   DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members (member_id)
+);
+
+-- 11. Post_Comments 테이블 (posts, members 참조)
+CREATE TABLE post_comments
+(
+    post_comment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id         BIGINT NOT NULL,
+    member_id       BIGINT NOT NULL,
+    content         TEXT   NOT NULL,
+    is_deleted      BOOLEAN   DEFAULT FALSE NOT NULL,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts (post_id),
+    FOREIGN KEY (member_id) REFERENCES members (member_id),
+    INDEX idx_post_id (post_id)
+);

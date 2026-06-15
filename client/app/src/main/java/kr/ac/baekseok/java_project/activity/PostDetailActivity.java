@@ -9,53 +9,62 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import kr.ac.baekseok.java_project.R;
-import kr.ac.baekseok.java_project.model.Comment;
+import kr.ac.baekseok.java_project.dto.request.PostCommentCreateRequest;
+import kr.ac.baekseok.java_project.dto.response.PostCommentResponse;
+import kr.ac.baekseok.java_project.dto.response.PostDetailResponse;
+import kr.ac.baekseok.java_project.network.ApiService;
+import kr.ac.baekseok.java_project.network.RetrofitClient;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * 게시판 게시물 상세 보기 화면
- *
- * Intent extras:
- *   EXTRA_POST_NO       : 게시물 번호
- *   EXTRA_POST_SUBJECT  : 제목
- *   EXTRA_POST_WRITER   : 작성자
- *   EXTRA_POST_CONTENT  : 본문 (선택)
- *   EXTRA_POST_DATE     : 작성일 (선택)
- */
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class PostDetailActivity extends AppCompatActivity {
 
-    public static final String EXTRA_POST_NO = "extra_post_no";
+    public static final String EXTRA_POST_ID = "extra_post_id";
     public static final String EXTRA_POST_SUBJECT = "extra_post_subject";
     public static final String EXTRA_POST_WRITER = "extra_post_writer";
+
+    // 이전 코드와의 호환성 유지
+    public static final String EXTRA_POST_NO = "extra_post_no";
     public static final String EXTRA_POST_CONTENT = "extra_post_content";
     public static final String EXTRA_POST_DATE = "extra_post_date";
 
+    private long postId;
     private TextView tvSubject, tvWriter, tvDate, tvContent, tvCommentHeader;
     private LinearLayout commentListContainer;
     private EditText etComment;
-
-    private final List<Comment> comments = new ArrayList<>();
-    private int nextCommentId = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_detail);
+        BaseActivity.applySystemBarInsets(this);
 
         bindViews();
         setupBackButton();
-        loadPostFromIntent();
-        prepareSampleComments();
-        renderComments();
+
+        postId = getIntent().getLongExtra(EXTRA_POST_ID, -1L);
+
+        // 화면 즉시 표시를 위해 Intent로 받은 기본 정보 먼저 채움
+        String subject = getIntent().getStringExtra(EXTRA_POST_SUBJECT);
+        String writer = getIntent().getStringExtra(EXTRA_POST_WRITER);
+        if (subject != null) tvSubject.setText(subject);
+        if (writer != null) tvWriter.setText(writer);
+
+        if (postId != -1L) {
+            loadPost();
+            loadComments();
+        }
+
         setupCommentInput();
     }
 
@@ -74,61 +83,65 @@ public class PostDetailActivity extends AppCompatActivity {
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
     }
 
-    private void loadPostFromIntent() {
-        String subject = getIntent().getStringExtra(EXTRA_POST_SUBJECT);
-        String writer = getIntent().getStringExtra(EXTRA_POST_WRITER);
-        String content = getIntent().getStringExtra(EXTRA_POST_CONTENT);
-        String date = getIntent().getStringExtra(EXTRA_POST_DATE);
+    private void loadPost() {
+        RetrofitClient.getApi().getPost(postId).enqueue(new Callback<PostDetailResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<PostDetailResponse> call,
+                                   @NonNull Response<PostDetailResponse> response) {
+                if (!response.isSuccessful() || response.body() == null) return;
+                PostDetailResponse body = response.body();
+                tvSubject.setText(body.title);
+                tvWriter.setText(body.writerName);
+                tvContent.setText(body.content);
+                if (body.createdAt != null) tvDate.setText(body.createdAt.substring(0, 10));
+            }
 
-        if (subject != null) tvSubject.setText(subject);
-        if (writer != null) tvWriter.setText(writer);
-        if (date != null) tvDate.setText(date);
-        else tvDate.setText(today());
-
-        if (content != null) {
-            tvContent.setText(content);
-        } else {
-            // 본문이 전달되지 않았을 때 더미 텍스트
-            tvContent.setText("이 음식점은 분위기가 좋고 가성비도 훌륭합니다. "
-                    + "특히 매콤한 양념과 푸짐한 양이 인상적이었어요. "
-                    + "주차 공간이 협소한 게 아쉽지만 음식 자체는 다시 찾고 싶습니다.");
-        }
+            @Override
+            public void onFailure(@NonNull Call<PostDetailResponse> call, @NonNull Throwable t) {
+                Toast.makeText(PostDetailActivity.this, "게시글을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void prepareSampleComments() {
-        comments.add(new Comment(nextCommentId++, "맛집탐험가",
-                "저도 가봤는데 진짜 맛있었어요!", today()));
-        comments.add(new Comment(nextCommentId++, "동네주민",
-                "주차 진짜 불편해요... 그래도 음식은 인정", today()));
+    private void loadComments() {
+        RetrofitClient.getApi().getComments(postId).enqueue(new Callback<List<PostCommentResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<PostCommentResponse>> call,
+                                   @NonNull Response<List<PostCommentResponse>> response) {
+                if (!response.isSuccessful() || response.body() == null) return;
+                renderComments(response.body());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<PostCommentResponse>> call, @NonNull Throwable t) {}
+        });
     }
 
-    private void renderComments() {
+    private void renderComments(List<PostCommentResponse> comments) {
         commentListContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
 
-        for (Comment c : comments) {
-            View row = inflater.inflate(R.layout.item_comment,
-                    commentListContainer, false);
+        for (PostCommentResponse c : comments) {
+            View row = inflater.inflate(R.layout.item_comment, commentListContainer, false);
             TextView writer = row.findViewById(R.id.tv_comment_writer);
             TextView date = row.findViewById(R.id.tv_comment_date);
             TextView content = row.findViewById(R.id.tv_comment_content);
 
-            if (writer != null) writer.setText(c.getWriter());
-            if (date != null) date.setText(c.getCreatedAt());
-            if (content != null) content.setText(c.getContent());
+            if (writer != null) writer.setText(c.writerName);
+            if (date != null && c.createdAt != null) date.setText(c.createdAt.substring(0, 10));
+            if (content != null) content.setText(c.content);
 
             commentListContainer.addView(row);
         }
 
-        tvCommentHeader.setText(String.format(Locale.getDefault(),
-                "답글 %d", comments.size()));
+        if (tvCommentHeader != null) {
+            tvCommentHeader.setText(String.format(Locale.getDefault(), "답글 %d", comments.size()));
+        }
     }
 
     private void setupCommentInput() {
         View btnSend = findViewById(R.id.btn_send);
-        if (btnSend != null) {
-            btnSend.setOnClickListener(v -> submitComment());
-        }
+        if (btnSend != null) btnSend.setOnClickListener(v -> submitComment());
 
         if (etComment != null) {
             etComment.setOnEditorActionListener((v, actionId, event) -> {
@@ -142,24 +155,31 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void submitComment() {
-        if (etComment == null) return;
+        if (etComment == null || postId == -1L) return;
         String text = etComment.getText().toString().trim();
         if (text.isEmpty()) {
             Toast.makeText(this, "답글 내용을 입력하세요", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 실제 앱에서는 서버에 POST 요청
-        Comment newComment = new Comment(nextCommentId++, "나", text, today());
-        comments.add(newComment);
+        ApiService api = RetrofitClient.getApi();
+        api.createComment(postId, new PostCommentCreateRequest(text))
+                .enqueue(new Callback<Long>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Long> call, @NonNull Response<Long> response) {
+                        if (!response.isSuccessful()) {
+                            Toast.makeText(PostDetailActivity.this, "답글 등록에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        etComment.setText("");
+                        Toast.makeText(PostDetailActivity.this, "답글이 등록되었습니다.", Toast.LENGTH_SHORT).show();
+                        loadComments();
+                    }
 
-        etComment.setText("");
-        renderComments();
-        Toast.makeText(this, "답글이 등록되었습니다", Toast.LENGTH_SHORT).show();
-    }
-
-    private String today() {
-        return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                .format(new Date());
+                    @Override
+                    public void onFailure(@NonNull Call<Long> call, @NonNull Throwable t) {
+                        Toast.makeText(PostDetailActivity.this, "서버에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }

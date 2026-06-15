@@ -50,6 +50,7 @@ public class RetrofitClient {
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(new AuthInterceptor(context))  // 토큰 자동 첨부
+                .authenticator(new TokenAuthenticator(context)) // 401 시 자동 갱신
                 .addInterceptor(logging)
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .readTimeout(15, TimeUnit.SECONDS)

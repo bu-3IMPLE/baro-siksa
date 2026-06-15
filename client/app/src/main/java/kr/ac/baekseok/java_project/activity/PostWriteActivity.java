@@ -6,18 +6,18 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import kr.ac.baekseok.java_project.R;
+import kr.ac.baekseok.java_project.dto.request.PostCreateRequest;
+import kr.ac.baekseok.java_project.network.RetrofitClient;
 
-/**
- * 게시물 작성 화면
- *
- * 등록 시 RESULT_OK로 종료. 호출한 Activity는
- * onActivityResult 또는 ActivityResultLauncher로 결과를 받아
- * 게시판 목록을 갱신할 수 있다.
- */
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class PostWriteActivity extends AppCompatActivity {
 
     public static final String EXTRA_NEW_SUBJECT = "extra_new_subject";
@@ -25,11 +25,13 @@ public class PostWriteActivity extends AppCompatActivity {
 
     private EditText etSubject;
     private EditText etContent;
+    private boolean isSubmitting = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_write);
+        BaseActivity.applySystemBarInsets(this);
 
         etSubject = findViewById(R.id.et_subject);
         etContent = findViewById(R.id.et_content);
@@ -40,23 +42,21 @@ public class PostWriteActivity extends AppCompatActivity {
 
     private void setupBackButton() {
         View btnBack = findViewById(R.id.btn_back);
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v -> confirmExit());
-        }
+        if (btnBack != null) btnBack.setOnClickListener(v -> confirmExit());
     }
 
     private void setupSubmitButton() {
         View btnSubmit = findViewById(R.id.btn_submit);
-        if (btnSubmit != null) {
-            btnSubmit.setOnClickListener(v -> submit());
-        }
+        if (btnSubmit != null) btnSubmit.setOnClickListener(v -> submit());
     }
 
     private void submit() {
-        String subject = etSubject.getText().toString().trim();
+        if (isSubmitting) return;
+
+        String title = etSubject.getText().toString().trim();
         String content = etContent.getText().toString().trim();
 
-        if (subject.isEmpty()) {
+        if (title.isEmpty()) {
             Toast.makeText(this, "제목을 입력하세요", Toast.LENGTH_SHORT).show();
             etSubject.requestFocus();
             return;
@@ -67,14 +67,29 @@ public class PostWriteActivity extends AppCompatActivity {
             return;
         }
 
-        // 실제로는 서버 POST 요청 → 성공 후 finish
-        android.content.Intent result = new android.content.Intent();
-        result.putExtra(EXTRA_NEW_SUBJECT, subject);
-        result.putExtra(EXTRA_NEW_CONTENT, content);
-        setResult(RESULT_OK, result);
+        isSubmitting = true;
 
-        Toast.makeText(this, "게시물이 등록되었습니다", Toast.LENGTH_SHORT).show();
-        finish();
+        RetrofitClient.getApi()
+                .createPost(new PostCreateRequest(title, content))
+                .enqueue(new Callback<Long>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Long> call, @NonNull Response<Long> response) {
+                        isSubmitting = false;
+                        if (!response.isSuccessful()) {
+                            Toast.makeText(PostWriteActivity.this, "게시글 등록에 실패했습니다.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        Toast.makeText(PostWriteActivity.this, "게시물이 등록되었습니다.", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<Long> call, @NonNull Throwable t) {
+                        isSubmitting = false;
+                        Toast.makeText(PostWriteActivity.this, "서버에 연결할 수 없습니다.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
@@ -82,14 +97,11 @@ public class PostWriteActivity extends AppCompatActivity {
         confirmExit();
     }
 
-    /**
-     * 작성 중인 내용이 있으면 확인 대화상자를 띄운다.
-     */
     private void confirmExit() {
-        String subject = etSubject.getText().toString().trim();
+        String title = etSubject.getText().toString().trim();
         String content = etContent.getText().toString().trim();
 
-        if (subject.isEmpty() && content.isEmpty()) {
+        if (title.isEmpty() && content.isEmpty()) {
             finish();
             return;
         }

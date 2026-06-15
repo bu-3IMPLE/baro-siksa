@@ -74,7 +74,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 저장된 토큰이 있으면 로그인 화면 건너뜀.
+        // accessToken이 만료됐더라도 TokenAuthenticator가 첫 API 호출 시 자동 갱신하고,
+        // refreshToken까지 만료된 경우엔 Authenticator가 이 화면으로 다시 돌려보낸다.
+        if (AuthInterceptor.getToken(this) != null) {
+            goToHome();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
+        BaseActivity.applySystemBarInsets(this);
 
         login_btn_1=(Button)findViewById(R.id.login_btn_1);
         register_btn_1=(Button)findViewById(R.id.register_btn_1);
