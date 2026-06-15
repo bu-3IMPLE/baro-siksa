@@ -58,6 +58,16 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "닉네임 변경", description = "현재 로그인한 회원의 닉네임을 변경합니다.")
+    @PatchMapping("/me/nickname")
+    public ResponseEntity<Void> updateNickname(
+            Principal principal,
+            @Valid @RequestBody MemberNicknameUpdateRequest request) {
+        Long memberId = Long.valueOf(principal.getName());
+        memberService.updateNickname(memberId, request);
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "비밀번호 변경", description = "현재 로그인한 회원의 비밀번호를 변경합니다.")
     @PatchMapping("/me/password")
     public ResponseEntity<Void> changePassword(

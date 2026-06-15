@@ -26,19 +26,17 @@ import retrofit2.Response;
  * 서버에서 가져오는 것: username(닉네임), email, foodPreference
  *
  * 주의:
- *  - 서버에 닉네임(username) 변경 API가 없어서 닉네임은 "조회 전용"이다.
- *    "닉네임 변경" 버튼을 누르면 안내 메시지를 띄운다.
- *  - 프로필 사진 API도 없어서 보류.
- *  - 음식취향(foodPreference)은 조회 + 수정 가능.
- *  - 비밀번호 변경 가능.
+ *  - 닉네임(username) 변경, 음식취향, 비밀번호 변경 가능.
+ *  - 프로필 사진 API 없어서 보류.
  */
 public class MyPageActivity extends BaseActivity {
 
     private TextView tvNickname;
 
-    private MemberResponse myInfo;   // 서버에서 받아온 내 정보
+    private MemberResponse myInfo;
 
     private ActivityResultLauncher<Intent> preferenceLauncher;
+    private ActivityResultLauncher<Intent> nicknameLauncher;
 
     @Override
     protected int getCurrentTab() {
@@ -64,7 +62,6 @@ public class MyPageActivity extends BaseActivity {
     }
 
     private void registerLaunchers() {
-        // 음식취향 수정 후 결과 받기
         preferenceLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -72,6 +69,19 @@ public class MyPageActivity extends BaseActivity {
                         String newPref = result.getData().getStringExtra(
                                 PreferenceEditActivity.EXTRA_NEW_PREFERENCE);
                         if (myInfo != null) myInfo.foodPreference = newPref;
+                    }
+                });
+
+        nicknameLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        String newNickname = result.getData().getStringExtra(
+                                NicknameChangeActivity.EXTRA_NEW_NICKNAME);
+                        if (newNickname != null) {
+                            if (myInfo != null) myInfo.username = newNickname;
+                            tvNickname.setText(newNickname);
+                        }
                     }
                 });
     }
@@ -131,11 +141,12 @@ public class MyPageActivity extends BaseActivity {
     }
 
     private void setupButtons() {
-        // 닉네임 변경 → 서버에 API 없음. 안내만.
-        setClickListener(R.id.btn_change_nickname, v ->
-                Toast.makeText(this,
-                        "닉네임 변경은 현재 지원되지 않습니다",
-                        Toast.LENGTH_SHORT).show());
+        setClickListener(R.id.btn_change_nickname, v -> {
+            Intent intent = new Intent(this, NicknameChangeActivity.class);
+            intent.putExtra(NicknameChangeActivity.EXTRA_CURRENT_NICKNAME,
+                    myInfo != null ? myInfo.username : "");
+            nicknameLauncher.launch(intent);
+        });
 
         // 프로필 변경 → 서버에 API 없음. 안내만.
         setClickListener(R.id.btn_change_profile, v ->

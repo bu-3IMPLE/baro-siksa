@@ -1,6 +1,7 @@
 package com.team3imple.barosiksa.domain.member.service;
 
 import com.team3imple.barosiksa.domain.member.dto.request.*;
+import com.team3imple.barosiksa.domain.member.dto.request.MemberNicknameUpdateRequest;
 import com.team3imple.barosiksa.domain.member.dto.response.MemberLoginResponse;
 import com.team3imple.barosiksa.domain.member.dto.response.MemberResponse;
 import com.team3imple.barosiksa.domain.member.entity.Member;
@@ -39,6 +40,13 @@ public class MemberService {
                 .build();
 
         return memberRepository.save(member).getId();
+    }
+
+    @Transactional
+    public void updateNickname(Long memberId, MemberNicknameUpdateRequest request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        member.updateUsername(request.username());
     }
 
     @Transactional

@@ -38,6 +38,7 @@ public class PreferenceEditActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preference_edit);
+        BaseActivity.applySystemBarInsets(this);
 
         memberId = getIntent().getLongExtra(EXTRA_MEMBER_ID, -1);
         String current = getIntent().getStringExtra(EXTRA_PREFERENCE);

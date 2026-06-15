@@ -46,6 +46,7 @@ public class OwnerReservationActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_owner_reservation);
+        BaseActivity.applySystemBarInsets(this);
 
         restaurantId = getIntent().getLongExtra(EXTRA_RESTAURANT_ID, -1);
         if (restaurantId < 0) {

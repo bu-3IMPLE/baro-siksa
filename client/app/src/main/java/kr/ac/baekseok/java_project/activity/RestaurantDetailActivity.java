@@ -54,6 +54,7 @@ public class RestaurantDetailActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_detail);
+        BaseActivity.applySystemBarInsets(this);
 
         restaurantId = getIntent().getLongExtra(EXTRA_RESTAURANT_ID, -1);
         String name = getIntent().getStringExtra(EXTRA_RESTAURANT_NAME);

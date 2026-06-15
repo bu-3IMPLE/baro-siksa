@@ -51,6 +51,10 @@ public interface ApiService {
     Call<Void> updatePreference(@Path("memberId") long memberId,
                                 @Body MemberUpdateRequest request);
 
+    /** 닉네임 변경 */
+    @PATCH("api/members/me/nickname")
+    Call<Void> updateNickname(@Body NicknameUpdateRequest request);
+
     /** 비밀번호 변경 */
     @PATCH("api/members/me/password")
     Call<Void> changePassword(@Body MemberPasswordUpdateRequest request);

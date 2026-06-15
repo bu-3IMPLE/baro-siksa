@@ -57,6 +57,7 @@ public class OwnerRestaurantActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_owner_restaurant);
+        BaseActivity.applySystemBarInsets(this);
 
         bindViews();
         setupMenuList();

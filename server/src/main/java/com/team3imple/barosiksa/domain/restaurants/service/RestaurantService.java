@@ -52,10 +52,10 @@ public class RestaurantService {
 
     public RestaurantResponse getRestaurant(Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         if (restaurant.isDeleted()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.RESTAURANT_NOT_FOUND);
         }
 
         return RestaurantResponse.from(restaurant);
@@ -64,10 +64,14 @@ public class RestaurantService {
     @Transactional
     public void updateRestaurant(Long memberId, Long restaurantId, RestaurantUpdateRequest request) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        if (restaurant.isDeleted()) {
+            throw new CustomException(ErrorCode.RESTAURANT_NOT_FOUND);
+        }
 
         if (!restaurant.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
         restaurant.updateRestaurantInfo(
@@ -89,14 +93,14 @@ public class RestaurantService {
     @Transactional
     public void deleteRestaurant(Long memberId, Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         if (restaurant.isDeleted()) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.RESTAURANT_NOT_FOUND);
         }
 
         if (!restaurant.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
         restaurant.deleteRestaurant();

@@ -59,6 +59,7 @@ public class RestaurantFormActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_form);
+        BaseActivity.applySystemBarInsets(this);
 
         restaurantId = getIntent().getLongExtra(EXTRA_RESTAURANT_ID, -1);
         isEditMode = restaurantId >= 0;

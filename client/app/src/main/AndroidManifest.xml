@@ -5,6 +5,10 @@
     <!-- 인터넷 권한 (서버 통신, 이미지 로드 시 필요) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- 위치 권한 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:name=".app.App"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -15,6 +19,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Java_Project"
         tools:targetApi="31">
+
+        <!-- 카카오맵 Native App Key (발급 후 여기에 입력) -->
+        <meta-data
+            android:name="com.kakao.sdk.AppKey"
+            android:value="19d97a2149e07716da2645b426868eb9" />
 
         <!-- 메인 진입 -->
         <activity

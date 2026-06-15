@@ -35,6 +35,7 @@ public class PasswordChangeActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_password_change);
+        BaseActivity.applySystemBarInsets(this);
 
         etCurrent = findViewById(R.id.et_current_password);
         etNew = findViewById(R.id.et_new_password);

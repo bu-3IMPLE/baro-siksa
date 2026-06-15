@@ -9,12 +9,19 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import kr.ac.baekseok.java_project.R;
+import kr.ac.baekseok.java_project.dto.request.NicknameUpdateRequest;
+import kr.ac.baekseok.java_project.network.RetrofitClient;
 
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * 닉네임 변경 화면
@@ -31,6 +38,7 @@ public class NicknameChangeActivity extends AppCompatActivity {
 
     private EditText etNickname;
     private TextView tvHelper;
+    private boolean isSaving = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -85,22 +93,44 @@ public class NicknameChangeActivity extends AppCompatActivity {
     }
 
     private void save() {
+        if (isSaving) return;
+
         String nickname = etNickname.getText().toString().trim();
 
         if (nickname.length() < MIN_LEN) {
             Toast.makeText(this,
-                    String.format(Locale.getDefault(),
-                            "닉네임은 %d자 이상이어야 합니다", MIN_LEN),
+                    String.format(Locale.getDefault(), "닉네임은 %d자 이상이어야 합니다", MIN_LEN),
                     Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 실제로는 서버에 PATCH 요청
-        Intent result = new Intent();
-        result.putExtra(EXTRA_NEW_NICKNAME, nickname);
-        setResult(RESULT_OK, result);
+        isSaving = true;
 
-        Toast.makeText(this, "닉네임이 변경되었습니다", Toast.LENGTH_SHORT).show();
-        finish();
+        RetrofitClient.getApi()
+                .updateNickname(new NicknameUpdateRequest(nickname))
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                        isSaving = false;
+                        if (response.isSuccessful()) {
+                            Toast.makeText(NicknameChangeActivity.this,
+                                    "닉네임이 변경되었습니다", Toast.LENGTH_SHORT).show();
+                            Intent result = new Intent();
+                            result.putExtra(EXTRA_NEW_NICKNAME, nickname);
+                            setResult(RESULT_OK, result);
+                            finish();
+                        } else {
+                            Toast.makeText(NicknameChangeActivity.this,
+                                    "변경에 실패했습니다", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                        isSaving = false;
+                        Toast.makeText(NicknameChangeActivity.this,
+                                "서버에 연결할 수 없습니다", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }

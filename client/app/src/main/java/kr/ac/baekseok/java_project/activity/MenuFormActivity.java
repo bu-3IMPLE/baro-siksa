@@ -49,6 +49,7 @@ public class MenuFormActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_form);
+        BaseActivity.applySystemBarInsets(this);
 
         restaurantId = getIntent().getLongExtra(EXTRA_RESTAURANT_ID, -1);
         menuId = getIntent().getLongExtra(EXTRA_MENU_ID, -1);

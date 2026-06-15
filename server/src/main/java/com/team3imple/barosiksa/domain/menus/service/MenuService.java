@@ -34,10 +34,10 @@ public class MenuService {
     @Transactional
     public Long createMenu(Long memberId, Long restaurantId, MenuCreateRequest request) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         if (!restaurant.getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
         Menu menu = Menu.builder()
@@ -56,7 +56,7 @@ public class MenuService {
 
     public List<MenuResponse> getMenusByRestaurantId(Long restaurantId, Long memberId) {
         if (!restaurantRepository.existsById(restaurantId)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.RESTAURANT_NOT_FOUND);
         }
 
         List<MenuResponse> menus = menuRepository.findMenusWithIngredientsByRestaurantId(restaurantId);
@@ -85,11 +85,11 @@ public class MenuService {
     @Transactional
     public void updateMenu(Long memberId, Long restaurantId, Long menuId, MenuUpdateRequest request) {
         Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
 
         if (!menu.getRestaurant().getId().equals(restaurantId) ||
                 !menu.getRestaurant().getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
         menu.updateMenuInfo(request.name(), request.price(), request.description());
@@ -102,11 +102,11 @@ public class MenuService {
     @Transactional
     public void deleteMenu(Long memberId, Long restaurantId, Long menuId) {
         Menu menu = menuRepository.findById(menuId)
-                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_INPUT_VALUE));
+                .orElseThrow(() -> new CustomException(ErrorCode.MENU_NOT_FOUND));
 
         if (!menu.getRestaurant().getId().equals(restaurantId) ||
                 !menu.getRestaurant().getMember().getId().equals(memberId)) {
-            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
         menuIngredientRepository.deleteByMenuId(menuId);

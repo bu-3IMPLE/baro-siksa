@@ -35,33 +35,6 @@
             android:textSize="11sp" />
     </LinearLayout>
 
-    <!-- My Tab -->
-    <LinearLayout
-        android:id="@+id/nav_my"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_person"
-            android:contentDescription="@string/nav_my" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="@string/nav_my"
-            android:textColor="@color/text_primary"
-            android:textSize="11sp" />
-    </LinearLayout>
-
     <!-- Board Tab -->
     <LinearLayout
         android:id="@+id/nav_board"
@@ -85,6 +58,33 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:text="@string/nav_board"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- My Tab -->
+    <LinearLayout
+        android:id="@+id/nav_my"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_person"
+            android:contentDescription="@string/nav_my" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/nav_my"
             android:textColor="@color/text_primary"
             android:textSize="11sp" />
     </LinearLayout>
